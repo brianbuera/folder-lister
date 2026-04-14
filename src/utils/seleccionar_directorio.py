@@ -1,10 +1,10 @@
 
 from tkinter import filedialog
 from pathlib import Path
-from mensajes import *
-from validador import validar_recien_exportados
+from .mensajes import *
+from .validador import validar_recien_exportados
 
-def seleccionar_directorio():
+def seleccionarDirectorio():
     directorio : Path = Path(filedialog.askdirectory())
 
     if not directorio != Path("."):
@@ -18,6 +18,6 @@ def seleccionar_directorio():
     validado = validar_recien_exportados(directorio)
     if validado:
         show_error(validado)
-        return
+        return 
     
     return directorio
