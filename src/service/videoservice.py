@@ -1,4 +1,3 @@
-from ..models.videoinfo import VideoInfo
 from ..factory.videofactory import VideoFactory
 from ..repository.videosrepository import VideoRepository
 from .sort_strategy import strategies
@@ -32,3 +31,4 @@ class VideoService:
     
     def limpiarRepo(self):
         self.repo.limpiar()
+

@@ -1,24 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
 from ..utils.seleccionar_directorio import seleccionarDirectorio
-import os
 from pathlib import Path
 from tkinter import filedialog, messagebox
 import json
-import shutil
-
+from .reproductor import Reproductor
 # Nombre del archivo donde guardaremos la configuración
 CONFIG_FILE = "config.json"
 class ListaDeCamaras(tk.Tk):
     def __init__(self, service):
-        
-        self.service = service
-        self.camaras = None
-
         super().__init__()
         self.title("Treeview Reordenable (Drag & Drop)")
         self.geometry("600x400")
-
+        self.service = service
+        self.camaras = None
         # Variables de estado para el arrastre
         self._drag_data = {"item": None, "index": None}
         # Estado de arrastre
@@ -293,4 +288,4 @@ class ListaDeCamaras(tk.Tk):
         self.tree.selection_set(item_id)
 
         indice = self.tree.index(item_id)
-        os.startfile(str(self.camaras[indice].ruta_inicial))
+        Reproductor(self, self.camaras[indice].ruta_inicial, Path(self.ruta_destino.get()))
