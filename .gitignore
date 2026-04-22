@@ -1,2 +1,4 @@
 *.pyc
 venv/
+*.bkp
+main2.py

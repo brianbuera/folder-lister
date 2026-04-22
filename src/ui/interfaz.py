@@ -5,6 +5,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 import json
 from .reproductor import Reproductor
+import shutil
 # Nombre del archivo donde guardaremos la configuración
 CONFIG_FILE = "config.json"
 class ListaDeCamaras(tk.Tk):
@@ -246,7 +247,8 @@ class ListaDeCamaras(tk.Tk):
         for idx, video in enumerate(self.camaras, 1):
             base = Path(self.ruta_destino.get())
             nueva_ruta = base / f"{str(idx).zfill(2)} - {video.nombre}"
-            print(nueva_ruta)
+            nueva_ruta.mkdir()
+            shutil.copy(video.ruta_inicial, nueva_ruta)
         self.limpiarListBox()
 
    

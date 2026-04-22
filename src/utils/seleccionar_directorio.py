@@ -17,7 +17,7 @@ def seleccionarDirectorio():
     
     validado = validar_recien_exportados(directorio)
     if validado:
-        show_error(validado)
+        print(validado)
         return 
     
     return directorio
