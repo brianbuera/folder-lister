@@ -2,10 +2,12 @@
 from tkinter import filedialog
 from pathlib import Path
 from .mensajes import *
-from .validador import validar_recien_exportados
+from ..validators import ValidadorRutasVideos
+from ..domains import RulesRutaVideo
 
 def seleccionarDirectorio():
     directorio : Path = Path(filedialog.askdirectory())
+    validador = ValidadorRutasVideos(RulesRutaVideo)
 
     if not directorio != Path("."):
         show_error(NO_SELECCIONADO)
@@ -14,8 +16,8 @@ def seleccionarDirectorio():
     if not any(directorio.iterdir()):
         show_error(VACIO)
         return
-    
-    validado = validar_recien_exportados(directorio)
+
+    validado = validador.validar(directorio.rglob("*.mkv"))
     if validado:
         print(validado)
         return 

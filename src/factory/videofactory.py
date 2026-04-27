@@ -1,4 +1,4 @@
-from ..models.videoinfo import VideoInfo
+from ..domains.videoinfo import VideoInfo
 from ..utils.obtener_horario import obtenerHorario
 
 class VideoFactory:

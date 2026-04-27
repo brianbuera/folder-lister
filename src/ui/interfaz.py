@@ -4,111 +4,259 @@ from ..utils.seleccionar_directorio import seleccionarDirectorio
 from pathlib import Path
 from tkinter import filedialog, messagebox
 import json
-from .reproductor import Reproductor
+from .reproductor import Reproductor, _FlatButton, BG_DARK, BG_CARD, BG_SURFACE, ACCENT, ACCENT_HOVER, TEXT_PRIMARY, TEXT_MUTED, BORDER, SUCCESS
 import shutil
-# Nombre del archivo donde guardaremos la configuración
+
+
 CONFIG_FILE = "config.json"
+
+
+def _apply_styles(root):
+    """Configura los estilos ttk globales para toda la app."""
+    style = ttk.Style(root)
+    style.theme_use("clam")
+
+    # ── Treeview ──────────────────────────────────────────────────────────────
+    style.configure(
+        "FP.Treeview",
+        background=BG_CARD,
+        foreground=TEXT_PRIMARY,
+        fieldbackground=BG_CARD,
+        rowheight=28,
+        font=("Courier", 10),
+        borderwidth=0,
+        relief="flat",
+    )
+    style.configure(
+        "FP.Treeview.Heading",
+        background=BG_SURFACE,
+        foreground=TEXT_MUTED,
+        font=("Courier", 9, "bold"),
+        relief="flat",
+        borderwidth=0,
+        padding=(8, 6),
+    )
+    style.map(
+        "FP.Treeview",
+        background=[("selected", ACCENT)],
+        foreground=[("selected", "#FFFFFF")],
+    )
+    style.map(
+        "FP.Treeview.Heading",
+        background=[("active", BORDER)],
+        foreground=[("active", TEXT_PRIMARY)],
+    )
+
+    # ── Scrollbar ─────────────────────────────────────────────────────────────
+    style.configure(
+        "FP.Vertical.TScrollbar",
+        background=BG_SURFACE,
+        troughcolor=BG_CARD,
+        bordercolor=BG_CARD,
+        arrowcolor=TEXT_MUTED,
+        relief="flat",
+        width=8,
+    )
+    style.map("FP.Vertical.TScrollbar", background=[("active", BORDER)])
+
+    # ── Entry (ruta destino) ──────────────────────────────────────────────────
+    style.configure(
+        "FP.TEntry",
+        fieldbackground=BG_SURFACE,
+        foreground=TEXT_MUTED,
+        insertcolor=ACCENT,
+        bordercolor=BORDER,
+        relief="flat",
+        font=("Courier", 10),
+        padding=(8, 5),
+    )
+
+
 class ListaDeCamaras(tk.Tk):
-    def __init__(self, service):
+    def __init__(self, service, caso_service):
         super().__init__()
         self.title("Treeview Reordenable (Drag & Drop)")
-        self.geometry("600x400")
+        self.geometry("720x520")
+        self.configure(bg=BG_DARK)
         self.service = service
+        self.caso_service = caso_service
         self.camaras = None
-        # Variables de estado para el arrastre
+
         self._drag_data = {"item": None, "index": None}
-        # Estado de arrastre
-        self.drag_item = None
+        self.drag_item  = None
         self.drag_index = None
         self.target_row = None
 
-        # --- 1. Inicializar variable de ruta y Cargar Configuración ---
         self.ruta_destino = tk.StringVar()
         self.cargar_configuracion()
-        
-        main_frame = ttk.Frame(self, padding="10") 
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # --- 2. SECCIÓN DE CONFIGURACIÓN (NUEVA) ---
-        config_frame = ttk.LabelFrame(main_frame, text="Configuración", padding="10")
-        config_frame.pack(fill=tk.X, pady=(0, 10)) # pady bottom 10
-        
-        lbl_ruta = ttk.Label(config_frame, text="Ruta Destino:")
-        lbl_ruta.pack(side=tk.LEFT)
-        
-        # Entry de solo lectura para mostrar la ruta actual
-        entry_ruta = ttk.Entry(config_frame, textvariable=self.ruta_destino, state="readonly", width=50)
-        entry_ruta.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-        
-        btn_cambiar_ruta = ttk.Button(config_frame, text="Cambiar...", command=self.cambiar_ruta_destino)
-        btn_cambiar_ruta.pack(side=tk.LEFT)
-        
-        # --- CONFIGURACIÓN DEL MENÚ ---
-        # Usamos self para que pertenezca a esta instancia de Tk
-        barra_menus = tk.Menu(self)
 
+        _apply_styles(self)
+        self._build_ui()
 
-        menu_archivo = tk.Menu(barra_menus, tearoff=0)
-        menu_archivo.add_command(label="Abrir", command=self.seleccionarCarpeta)
-        menu_archivo.add_separator() 
-        menu_archivo.add_command(label="Salir", command=self.quit)  
-        
-        # Agregamos el menú a la barra y la barra a la ventana
+    # ── Construcción de la UI ─────────────────────────────────────────────────
+
+    def _build_ui(self):
+
+        # ── Menú ──────────────────────────────────────────────────────────────
+        barra_menus = tk.Menu(
+            self,
+            bg=BG_CARD, fg=TEXT_PRIMARY,
+            activebackground=ACCENT, activeforeground=BORDER,
+            relief="flat", bd=0,
+        )
+        menu_archivo = tk.Menu(
+            barra_menus, tearoff=0,
+            bg=BG_CARD, fg=TEXT_PRIMARY,
+            activebackground=ACCENT, activeforeground=BORDER,
+            relief="flat",
+        )
+        menu_archivo.add_command(label="Abrir",            command=self.seleccionarCarpeta)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Crear caso base",  command=self.crear_caso)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir",            command=self.quit)
         barra_menus.add_cascade(label="Archivo", menu=menu_archivo)
         self.config(menu=barra_menus)
 
-        # --- CONFIGURACIÓN DEL TREEVIEW ---
-        # 'fill=both' y 'expand=True' hacen que ocupe el espacio disponible
-        self.tree = ttk.Treeview(self, columns=('N', 'Camara', 'Hora', 'Fecha'), show='headings', selectmode="extended")
-        self.tree.tag_configure("drag_hover", background="#cce5ff")
-        self.tree.pack(padx=10, pady=10, fill='both', expand=True)
+        # ── Header ────────────────────────────────────────────────────────────
+        header = tk.Frame(self, bg=BG_DARK)
+        header.pack(fill="x", padx=16, pady=(14, 8))
 
-        self.tree.heading('N', text='N', anchor=tk.W)
-        self.tree.heading('Camara', text='Camara', anchor=tk.W,command=lambda: self.ordenarPor("nombre"))
-        self.tree.heading('Hora', text='Hora', anchor=tk.W, command=lambda: self.ordenarPor("horario"))
-        self.tree.heading(column='Fecha', text='Fecha', anchor=tk.W)
+        tk.Label(
+            header, text="●", font=("Courier", 10),
+            fg=ACCENT, bg=BG_DARK,
+        ).pack(side="left")
+        tk.Label(
+            header, text="  FOLDER LISTER",
+            font=("Courier", 12, "bold"),
+            fg=TEXT_PRIMARY, bg=BG_DARK,
+        ).pack(side="left")
 
-        
-        self.tree.column('N', width=50, anchor=tk.CENTER)
-        self.tree.column('Camara', width=200, anchor=tk.W)
-        self.tree.column('Hora', width=100, anchor=tk.CENTER)
-        self.tree.column('Fecha', width=100, anchor=tk.CENTER)
+        tk.Frame(self, bg=BORDER, height=1).pack(fill="x", padx=16)
 
+        # ── Config: ruta destino ──────────────────────────────────────────────
+        config_card = tk.Frame(self, bg=BG_CARD, padx=14, pady=10)
+        config_card.pack(fill="x", padx=16, pady=(12, 0))
 
+        tk.Label(
+            config_card, text="RUTA DESTINO",
+            font=("Courier", 8, "bold"), fg=TEXT_MUTED, bg=BG_CARD,
+        ).pack(anchor="w", pady=(0, 4))
 
-        # --- EVENTOS DRAG & DROP ---
-        # Usamos <ButtonPress-1> para capturar el ítem sin romper la selección
-        self.tree.bind('<ButtonPress-1>', self.on_start_drag, add='+')
-        self.tree.bind('<B1-Motion>', self.on_drag_motion, add='+')
-        self.tree.bind('<ButtonRelease-1>', self.on_drop, add='+')
-        self.tree.bind('<Double-Button-1>', self.abrir_video, add='+')
+        ruta_row = tk.Frame(config_card, bg=BG_CARD)
+        ruta_row.pack(fill="x")
 
+        # borde del entry
+        entry_border = tk.Frame(ruta_row, bg=BORDER, padx=1, pady=1)
+        entry_border.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
+        entry_ruta = tk.Entry(
+            entry_border,
+            textvariable=self.ruta_destino,
+            state="readonly",
+            font=("Courier", 10),
+            bg=BG_SURFACE, fg=TEXT_MUTED,
+            readonlybackground=BG_SURFACE,
+            disabledforeground=TEXT_MUTED,
+            relief="flat",
+            bd=4,
+            insertbackground=ACCENT,
+        )
+        entry_ruta.pack(fill="x")
 
-        # --- CONTENEDOR DE BOTONES ---
-        frame_botones = tk.Frame(self)
-        frame_botones.pack(side="bottom", fill="x", padx=10, pady=5)
+        btn_cambiar = _FlatButton(
+            ruta_row,
+            text="Cambiar...",
+            command=self.cambiar_ruta_destino,
+            bg=BG_SURFACE, fg=TEXT_PRIMARY,
+            hover_bg=BORDER,
+            font=("Courier", 9),
+            padx=12, pady=6,
+            width=100,
+        )
+        btn_cambiar.pack(side="left")
 
-        self.btn_confirmar = ttk.Button(frame_botones, text="Confirmar", command=self.enumerar)
-        self.btn_confirmar.pack(side="left", padx=2)
-        self.btn_confirmar.config(state="disabled")
+        # ── Treeview ──────────────────────────────────────────────────────────
+        tree_wrapper = tk.Frame(self, bg=BG_DARK)
+        tree_wrapper.pack(fill="both", expand=True, padx=16, pady=(12, 0))
 
-        self.btn_copiar = ttk.Button(frame_botones, text="Copiar", command=self.copiar_listbox)
-        self.btn_copiar.pack(side="left", padx=2)
-        self.btn_copiar.config(state="disabled")
+        # borde decorativo alrededor del tree
+        tree_border = tk.Frame(tree_wrapper, bg=BORDER, padx=1, pady=1)
+        tree_border.pack(fill="both", expand=True)
 
-        self.btn_limpiar = ttk.Button(frame_botones, text="Limpiar", command=self.limpiarListBox)
-        self.btn_limpiar.pack(side="left", padx=2)
-        self.btn_limpiar.config(state="disabled")
+        tree_inner = tk.Frame(tree_border, bg=BG_CARD)
+        tree_inner.pack(fill="both", expand=True)
 
-        
-        self.btn_delete = ttk.Button(frame_botones, text="Eliminar", command=self.eliminar_camara)
-        self.btn_delete.pack(side="left", padx=2)
-        self.btn_delete.config(state="disabled")
+        self.tree = ttk.Treeview(
+            tree_inner,
+            columns=("N", "Camara", "Hora", "Fecha"),
+            show="headings",
+            selectmode="extended",
+            style="FP.Treeview",
+        )
+        self.tree.tag_configure("drag_hover", background=BORDER)
+        self.tree.tag_configure("odd",  background=BG_CARD)
+        self.tree.tag_configure("even", background=BG_SURFACE)
 
-    # --- MÉTODOS DE CONFIGURACIÓN ---
+        self.tree.heading("N",      text="N°",     anchor=tk.W)
+        self.tree.heading("Camara", text="CÁMARA", anchor=tk.W,
+                          command=lambda: self.ordenarPor("nombre"))
+        self.tree.heading("Hora",   text="HORA",   anchor=tk.W,
+                          command=lambda: self.ordenarPor("horario"))
+        self.tree.heading("Fecha",  text="FECHA",  anchor=tk.W)
+
+        self.tree.column("N",      width=48,  anchor=tk.CENTER, stretch=False)
+        self.tree.column("Camara", width=300, anchor=tk.W)
+        self.tree.column("Hora",   width=110, anchor=tk.CENTER)
+        self.tree.column("Fecha",  width=120, anchor=tk.CENTER)
+
+        scrollbar = ttk.Scrollbar(
+            tree_inner,
+            orient="vertical",
+            command=self.tree.yview,
+            style="FP.Vertical.TScrollbar",
+        )
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        self.tree.pack(side="left", fill="both", expand=True)
+
+        # Eventos drag & drop y doble click (sin cambios)
+        self.tree.bind("<ButtonPress-1>",   self.on_start_drag, add="+")
+        self.tree.bind("<B1-Motion>",       self.on_drag_motion, add="+")
+        self.tree.bind("<ButtonRelease-1>", self.on_drop,       add="+")
+        self.tree.bind("<Double-Button-1>", self.abrir_video,   add="+")
+
+        # ── Barra de botones ──────────────────────────────────────────────────
+        btn_bar = tk.Frame(self, bg=BG_DARK)
+        btn_bar.pack(fill="x", padx=16, pady=(10, 14))
+
+        btn_defs = [
+            ("Confirmar", self.enumerar,        ACCENT,      ACCENT_HOVER,  "btn_confirmar"),
+            ("Copiar",    self.copiar_listbox,   BG_SURFACE,  BORDER,        "btn_copiar"),
+            ("Limpiar",   self.limpiarListBox,   BG_SURFACE,  BORDER,        "btn_limpiar"),
+            ("Eliminar",  self.eliminar_camara,  "#3A1A1A",   "#5A2A2A",     "btn_delete"),
+        ]
+
+        for label, cmd, bg, hbg, attr in btn_defs:
+            btn = _FlatButton(
+                btn_bar,
+                text=label,
+                command=cmd,
+                bg=bg, fg=TEXT_PRIMARY,
+                hover_bg=hbg,
+                font=("Courier", 10, "bold"),
+                padx=14, pady=9,
+                width=110,
+            )
+            btn.pack(side="left", padx=(0, 6))
+            # guardamos referencia para enable/disable
+            setattr(self, attr, btn)
+            btn.set_state("disabled")
+
+    # ── Métodos de configuración (sin cambios) ────────────────────────────────
+
     def cargar_configuracion(self):
-        """Carga la ruta desde el archivo JSON o usa una por defecto."""
         try:
             if Path(CONFIG_FILE).exists():
                 with open(CONFIG_FILE, "r") as f:
@@ -117,17 +265,14 @@ class ListaDeCamaras(tk.Tk):
                     if Path(ruta).exists():
                         self.ruta_destino.set(ruta)
                     else:
-                        # Si la ruta guardada ya no existe, usamos la carpeta actual
                         self.ruta_destino.set(str(Path.cwd()))
             else:
-                # Si no existe archivo config, usamos carpeta actual por defecto
                 self.ruta_destino.set(str(Path.cwd()))
         except Exception as e:
             print(f"Error cargando config: {e}")
             self.ruta_destino.set(str(Path.cwd()))
 
     def guardar_configuracion(self):
-        """Guarda la ruta actual en un archivo JSON."""
         data = {"ruta_destino": self.ruta_destino.get()}
         try:
             with open(CONFIG_FILE, "w") as f:
@@ -136,24 +281,33 @@ class ListaDeCamaras(tk.Tk):
             messagebox.showerror("Error", f"No se pudo guardar la configuración: {e}")
 
     def cambiar_ruta_destino(self):
-        """Abre el diálogo para seleccionar carpeta."""
-        directorio = filedialog.askdirectory(initialdir=self.ruta_destino.get(), 
-                                             title="Seleccionar carpeta de destino")
+        directorio = filedialog.askdirectory(
+            initialdir=self.ruta_destino.get(),
+            title="Seleccionar carpeta de destino",
+        )
         if directorio:
             self.ruta_destino.set(directorio)
-            self.guardar_configuracion() # Guardamos inmediatamente al cambiar
+            self.guardar_configuracion()
 
+    # ── Helpers UI ────────────────────────────────────────────────────────────
+
+    def _set_controls(self, state):
+        for attr in ("btn_confirmar", "btn_copiar", "btn_limpiar", "btn_delete"):
+            getattr(self, attr).set_state(state)
+        # Habilitar/deshabilitar headings ordenables
+        if state == "normal":
+            self.tree.heading("Camara", command=lambda: self.ordenarPor("nombre"))
+            self.tree.heading("Hora",   command=lambda: self.ordenarPor("horario"))
+        else:
+            self.tree.heading("Camara", command=lambda: None)
+            self.tree.heading("Hora",   command=lambda: None)
 
     def limpiarListBox(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
-        self.camaras.clear() 
+        self.camaras.clear()
         self.service.limpiarRepo()
-        self.btn_confirmar.config(state="disabled")
-        self.btn_copiar.config(state="disabled")
-        self.btn_limpiar.config(state="disabled")
-        self.btn_delete.config(state="disabled")
-
+        self._set_controls("disabled")
 
     def seleccionarCarpeta(self):
         carpetaCCTV = seleccionarDirectorio()
@@ -163,22 +317,22 @@ class ListaDeCamaras(tk.Tk):
         self.camaras = self.service.obtenerVideos()
         self.cargar_camaras()
 
-
     def cargar_camaras(self):
-        """Limpia y vuelve a cargar el Treeview con nuevos datos."""
-
         for item in self.tree.get_children():
             self.tree.delete(item)
-
-        for idx, dir in enumerate(self.camaras,1):
-            self.tree.insert('', tk.END, values=(str(idx).zfill(2),dir.nombre, dir.hora_fecha.strftime("%H:%M:%S"), dir.hora_fecha.strftime("%Y-%m-%d")))
-
-        self.btn_confirmar.config(state="normal")
-        self.btn_copiar.config(state="normal")
-        self.btn_limpiar.config(state="normal")
-        self.btn_delete.config(state="normal")
-
-
+        for idx, dir in enumerate(self.camaras, 1):
+            tag = "even" if idx % 2 == 0 else "odd"
+            self.tree.insert(
+                "", tk.END,
+                values=(
+                    str(idx).zfill(2),
+                    dir.nombre,
+                    dir.hora_fecha.strftime("%H:%M:%S"),
+                    dir.hora_fecha.strftime("%Y-%m-%d"),
+                ),
+                tags=(tag,),
+            )
+        self._set_controls("normal" if self.camaras else "disabled")
 
     def ordenarPor(self, estrategia):
         self.camaras = self.service.ordenar(estrategia)
@@ -186,108 +340,81 @@ class ListaDeCamaras(tk.Tk):
         self.cargar_camaras()
         self.service.actualizarLista(self.camaras)
 
-
-# --- LÓGICA DE DRAG & DROP ---
+    # ── Drag & Drop (sin cambios) ─────────────────────────────────────────────
 
     def on_start_drag(self, event):
-        """Identifica qué fila se está intentando arrastrar."""
         item = self.tree.identify_row(event.y)
         if item:
-            self._drag_data["item"] = item
+            self._drag_data["item"]  = item
             self._drag_data["index"] = self.tree.index(item)
 
     def on_drag_motion(self, event):
-        """Visualiza dónde caería el ítem mientras se arrastra."""
         if not self._drag_data["item"]:
             return
-
         target_item = self.tree.identify_row(event.y)
-        
-        # Limpiar estilos previos
         for item in self.tree.get_children():
-            self.tree.item(item, tags=())
-
-        # Resaltar la fila destino
+            idx = self.tree.index(item)
+            self.tree.item(item, tags=("even" if (idx + 1) % 2 == 0 else "odd",))
         if target_item and target_item != self._drag_data["item"]:
             self.tree.item(target_item, tags=("drag_hover",))
 
     def on_drop(self, event):
-        """Ejecuta el reordenamiento real en los datos y la UI."""
         target_item = self.tree.identify_row(event.y)
         source_item = self._drag_data["item"]
-
         if source_item and target_item and source_item != target_item:
             target_index = self.tree.index(target_item)
             source_index = self._drag_data["index"]
-
-            # --- REORDENAR LISTA DE DATOS ---
-            # Extraemos el objeto de la posición original e insertamos en la nueva
-            obj_movido = self.camaras.pop(source_index)
+            obj_movido   = self.camaras.pop(source_index)
             self.camaras.insert(target_index, obj_movido)
-
-            # Sincronizar el Service (opcional, dependiendo de tu arquitectura)
-            # self.service.actualizar_orden(self.camaras)
             self.service.actualizarLista(self.camaras)
-
-            # Refrescar vista
             self.cargar_camaras()
-            
-            # Mantener la selección en el nuevo lugar
             new_id = self.tree.get_children()[target_index]
             self.tree.selection_set(new_id)
-
-        # Limpiar estado
         self._drag_data = {"item": None, "index": None}
         for item in self.tree.get_children():
-            self.tree.item(item, tags=())
+            idx = self.tree.index(item)
+            self.tree.item(item, tags=("even" if (idx + 1) % 2 == 0 else "odd",))
 
-
+    # ── Acciones (sin cambios) ────────────────────────────────────────────────
 
     def enumerar(self):
         for idx, video in enumerate(self.camaras, 1):
-            base = Path(self.ruta_destino.get())
+            base       = Path(self.ruta_destino.get())
             nueva_ruta = base / f"{str(idx).zfill(2)} - {video.nombre}"
             nueva_ruta.mkdir()
             shutil.copy(video.ruta_inicial, nueva_ruta)
-        self.limpiarListBox()
+        self.btn_confirmar.set_state("disabled")
+        self.btn_delete.set_state("disabled")
 
-   
     def copiar_listbox(self):
         filas = []
-
         for item in self.tree.get_children():
             valores = self.tree.item(item, "values")
             filas.append("\t".join(map(str, valores[1:3])))
-
         texto = "\n".join(filas)
-
         self.clipboard_clear()
         self.clipboard_append(texto)
 
-
     def eliminar_camara(self):
         seleccion = self.tree.selection()
-
         if not seleccion:
             return
-
-        indices = [self.tree.index(item_id) for item_id in seleccion]
-        indices.sort(reverse=True)
-
+        indices = sorted([self.tree.index(i) for i in seleccion], reverse=True)
         for i in indices:
             del self.camaras[i]
-
         self.service.actualizarLista(self.camaras)
         self.cargar_camaras()
-    
-    
+
     def abrir_video(self, event):
         item_id = self.tree.identify_row(event.y)
-
         if not item_id:
             return
-
         self.tree.selection_set(item_id)
-
         indice = self.tree.index(item_id)
-        Reproductor(self, self.camaras[indice].ruta_inicial, Path(self.ruta_destino.get()))
+        Reproductor(self, self.camaras[indice], Path(self.ruta_destino.get()), self.service)
+        self.camaras = self.service.obtenerVideos()
+        self.cargar_camaras()
+
+    def crear_caso(self):
+        self.caso_service.agregar_videos(self.camaras)
+        self.caso_service.crear_nuevo_caso()

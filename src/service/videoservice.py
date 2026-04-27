@@ -19,16 +19,25 @@ class VideoService:
         return self._repo.videos
     
     def agregarVideo(self, ruta): 
-        self._repo.agregar_video(ruta)
-
+        self._repo.agregar_video(VideoFactory.crear(ruta))
                 
     def ordenar(self, estrategia):
         return strategies[estrategia](self._repo.videos)
         
-    
     def actualizarLista(self, Videos):
         self.repo.videos = Videos
     
     def limpiarRepo(self):
         self.repo.limpiar()
+
+    def agregar_screenshot(self, video, path):
+        self.repo.agregar_imagen(video, path)
+    
+    def agregar_observacion(self, video, observacion):
+        self.repo.agregar_observacion(video, observacion)
+
+
+
+
+
 

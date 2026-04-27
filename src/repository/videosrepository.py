@@ -1,5 +1,4 @@
-from pathlib import Path
-from ..models.videoinfo import VideoInfo
+from ..domains.videoinfo import VideoInfo
 
 class VideoRepository:
 
@@ -21,6 +20,20 @@ class VideoRepository:
 
     def limpiar(self):
         self._videos.clear()    
+    
+    def agregar_imagen(self, video, path):
+        for v in self._videos:
+            if v == video: 
+                v.agregar_screen(path) 
+
+    def agregar_observacion(self, video, observacion):
+        for v in self._videos:
+            if v == video: 
+                v.agregar_obs(observacion) 
+
+
+    
+
 
 
 
