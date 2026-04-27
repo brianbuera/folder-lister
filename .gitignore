@@ -3,5 +3,6 @@ venv/
 *.bkp
 main2.py
 detalles_diapositiva.py
-templates/
+.templates/
 *.json
+.gitignore
