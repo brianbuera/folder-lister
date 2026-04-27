@@ -1,8 +1,0 @@
-*.pyc
-venv/
-*.bkp
-main2.py
-detalles_diapositiva.py
-.templates/
-*.json
-.gitignore
