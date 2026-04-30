@@ -19,7 +19,8 @@ class CasoService ():
         aplicacion = PowerPointClient()
         presentacion = aplicacion.open_presentacion(self.ruta_template)
         for v in self.videos:
-            Diapositivas.crearDiapositiva(presentacion, v)
+            if v.ruta_screenshot:
+                Diapositivas.crearDiapositiva(presentacion, v)
     
     def buscar_template(self):
          with open("config.json", "r") as f:

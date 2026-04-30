@@ -18,7 +18,7 @@ class ValidadorRutasVideos:
             if not (
                 self.rules.es_carpeta_valida(carpeta_actual.name)
                 and self.rules.es_video_valido(ruta.name)
-                and self.rules.es_padre_valido(carpeta_padre.name)
+                
             ):
                 errores.append(f"No cumple formato: {ruta}")
 

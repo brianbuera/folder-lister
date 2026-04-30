@@ -30,10 +30,10 @@ class Diapositivas:
             FileName=video.ruta_screenshot,
             LinkToFile=False,
             SaveWithDocument=True,
-            Left=0.57,   # posición horizontal
-            Top=49.33,    # posición vertical
-            Width=719.52,  # ancho
-            Height=404.60 # alto
+            Left=0.28,   # posición horizontal
+            Top=49.32,    # posición vertical
+            Width=720.28,  # ancho
+            Height=403.65 # alto
         )
         shape.ZOrder(1)
 

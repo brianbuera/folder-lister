@@ -273,8 +273,10 @@ class ListaDeCamaras(tk.Tk):
             self.ruta_destino.set(str(Path.cwd()))
 
     def guardar_configuracion(self):
-        data = {"ruta_destino": self.ruta_destino.get()}
         try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+            data ["ruta_destino"] = self.ruta_destino.get()
             with open(CONFIG_FILE, "w") as f:
                 json.dump(data, f)
         except Exception as e:
