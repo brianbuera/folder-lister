@@ -1,6 +1,6 @@
 from ..factory.videofactory import VideoFactory
 from ..repository.videosrepository import VideoRepository
-from .sort_strategy import strategies
+from ..domains import strategies
 
 class VideoService:
     def __init__(self, repo: VideoRepository):
@@ -11,6 +11,7 @@ class VideoService:
         return self._repo
     
     def cargarVideos(self, directorio):
+        self.limpiarRepo()
         rutas = directorio.rglob("*.mkv")
         for ruta in rutas:
             self._repo.agregar_video(VideoFactory.crear(ruta))

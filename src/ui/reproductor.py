@@ -3,39 +3,16 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from pathlib import Path
-import re
+from ..styles.colors import *
+from ..utils import cortar_desde_primera_letra
+from .widgets.flat_button import _FlatButton
 
-
-def cortar_desde_primera_letra(texto: str) -> str:
-    match = re.search(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]", texto)
-    return texto[match.start():] if match else ""
-
-# ── Paleta de colores ────────────────────────────────────────────────────────
-BG_DARK      = "#0F1117"   # fondo principal
-BG_CARD      = "#1A1D27"   # tarjeta / panel inferior
-BG_SURFACE   = "#22263A"   # superficie de inputs
-ACCENT       = "#4F8EF7"   # azul principal
-ACCENT_HOVER = "#6EA6FF"
-TEXT_PRIMARY = "#E8EAF0"
-TEXT_MUTED   = "#7A7F99"
-BORDER       = "#2E3249"
-SUCCESS      = "#3DDC84"
-
-
-def _hex_to_rgb(h):
-    h = h.lstrip("#")
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-def _lerp_color(c1, c2, t):
-    r = int(c1[0] + (c2[0] - c1[0]) * t)
-    g = int(c1[1] + (c2[1] - c1[1]) * t)
-    b = int(c1[2] + (c2[2] - c1[2]) * t)
-    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 class Reproductor(tk.Toplevel):
     def __init__(self, parent, video, destino: Path, service):
         super().__init__(parent)
+        self.parent = parent
         self.video   = video
         self.destino = destino / "captures"
         self.service = service
@@ -114,6 +91,8 @@ class Reproductor(tk.Toplevel):
 
         self.label = tk.Label(border_frame, bg=BG_DARK, cursor="crosshair")
         self.label.pack()
+        self.label.bind("<Double-Button-1>", lambda e: self.abrir_fullscreen())
+
 
         # ── Slider + frame counter ────────────────────────────────────────────
         slider_area = tk.Frame(self, bg=BG_DARK)
@@ -250,6 +229,8 @@ class Reproductor(tk.Toplevel):
         if self.cap:
             self.cap.release()
         self.destroy()
+        self.parent.deiconify()
+
 
     def verificar_limite(self, event):
         contenido = self.text_input.get("1.0", "end-1c")
@@ -265,58 +246,34 @@ class Reproductor(tk.Toplevel):
         if n >= 219 and event.keysym not in ("BackSpace", "Delete", "Left", "Right", "Up", "Down"):
             return "break"
 
+    def abrir_fullscreen(self):
+        fs = tk.Toplevel(self)
+        fs.attributes("-fullscreen", True)
+        fs.configure(bg="black")
 
-# ── Widget auxiliar: botón flat con hover ────────────────────────────────────
+        label = tk.Label(fs, bg="black")
+        label.pack(expand=True)
 
-class _FlatButton(tk.Canvas):
-    """Botón rectangular sin relieve, con transición de color al hover."""
+        def mostrar():
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
+            ret, frame = self.cap.read()
+            if ret:
+                screen_w = fs.winfo_screenwidth()
+                screen_h = fs.winfo_screenheight()
 
-    def __init__(self, parent, text, command, bg, fg, hover_bg,
-                 font, padx=12, pady=8, width=200, **kwargs):
-        h = pady * 2 + 22
-        super().__init__(parent, bg=parent["bg"], bd=0, highlightthickness=0,
-                         height=h, width=width)
-        self._bg       = bg
-        self._hover_bg = hover_bg
-        self._fg       = fg
-        self._font     = font
-        self._text     = text
-        self._cmd      = command
-        self._width    = width
-        self._height   = h
-        self._padx     = padx
-        self._pady     = pady
+                h, w = frame.shape[:2]
 
-        self._rect = self.create_rectangle(0, 0, width, h, fill=bg, outline="", tags="btn")
-        self._lbl  = self.create_text(
-            width // 2, h // 2,
-            text=text, fill=fg,
-            font=font, tags="btn"
-        )
+                scale = min(screen_w / w, screen_h / h)
+                new_w = int(w * scale)
+                new_h = int(h * scale)
 
-        self.tag_bind("btn", "<Enter>",   self._on_enter)
-        self.tag_bind("btn", "<Leave>",   self._on_leave)
-        self.tag_bind("btn", "<Button-1>", self._on_click)
+                frame = cv2.resize(frame, (new_w, new_h))
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    def _on_enter(self, _):
-        if not getattr(self, '_disabled', False):
-            self.itemconfig(self._rect, fill=self._hover_bg)
+                img = ImageTk.PhotoImage(Image.fromarray(frame))
+                label.imgtk = img
+                label.config(image=img)
 
-    def _on_leave(self, _):
-        if not getattr(self, '_disabled', False):
-            self.itemconfig(self._rect, fill=self._bg)
-        else:
-            self.itemconfig(self._rect, fill=BORDER)
+        mostrar()
 
-    def _on_click(self, _):
-        if not getattr(self, '_disabled', False):
-            self._cmd()
-
-    def set_state(self, state):
-        """'normal' o 'disabled'. Cambia apariencia y bloquea clicks."""
-        self._disabled = (state == "disabled")
-        alpha = TEXT_MUTED if self._disabled else self._fg
-        fill  = BORDER     if self._disabled else self._bg
-        self.itemconfig(self._rect, fill=fill)
-        self.itemconfig(self._lbl,  fill=alpha)
-
+        fs.bind("<Escape>", lambda e: fs.destroy())

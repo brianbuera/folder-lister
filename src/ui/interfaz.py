@@ -4,72 +4,17 @@ from ..utils.seleccionar_directorio import seleccionarDirectorio
 from pathlib import Path
 from tkinter import filedialog, messagebox
 import json
-from .reproductor import Reproductor, _FlatButton, BG_DARK, BG_CARD, BG_SURFACE, ACCENT, ACCENT_HOVER, TEXT_PRIMARY, TEXT_MUTED, BORDER, SUCCESS
+from .reproductor import Reproductor
+from .widgets.flat_button import _FlatButton
+from ..styles.colors import *
+from ..styles.apply_style import _apply_styles
 import shutil
 
 
 CONFIG_FILE = "config.json"
 
 
-def _apply_styles(root):
-    """Configura los estilos ttk globales para toda la app."""
-    style = ttk.Style(root)
-    style.theme_use("clam")
 
-    # ── Treeview ──────────────────────────────────────────────────────────────
-    style.configure(
-        "FP.Treeview",
-        background=BG_CARD,
-        foreground=TEXT_PRIMARY,
-        fieldbackground=BG_CARD,
-        rowheight=28,
-        font=("Courier", 10),
-        borderwidth=0,
-        relief="flat",
-    )
-    style.configure(
-        "FP.Treeview.Heading",
-        background=BG_SURFACE,
-        foreground=TEXT_MUTED,
-        font=("Courier", 9, "bold"),
-        relief="flat",
-        borderwidth=0,
-        padding=(8, 6),
-    )
-    style.map(
-        "FP.Treeview",
-        background=[("selected", ACCENT)],
-        foreground=[("selected", "#FFFFFF")],
-    )
-    style.map(
-        "FP.Treeview.Heading",
-        background=[("active", BORDER)],
-        foreground=[("active", TEXT_PRIMARY)],
-    )
-
-    # ── Scrollbar ─────────────────────────────────────────────────────────────
-    style.configure(
-        "FP.Vertical.TScrollbar",
-        background=BG_SURFACE,
-        troughcolor=BG_CARD,
-        bordercolor=BG_CARD,
-        arrowcolor=TEXT_MUTED,
-        relief="flat",
-        width=8,
-    )
-    style.map("FP.Vertical.TScrollbar", background=[("active", BORDER)])
-
-    # ── Entry (ruta destino) ──────────────────────────────────────────────────
-    style.configure(
-        "FP.TEntry",
-        fieldbackground=BG_SURFACE,
-        foreground=TEXT_MUTED,
-        insertcolor=ACCENT,
-        bordercolor=BORDER,
-        relief="flat",
-        font=("Courier", 10),
-        padding=(8, 5),
-    )
 
 
 class ListaDeCamaras(tk.Tk):
@@ -81,6 +26,7 @@ class ListaDeCamaras(tk.Tk):
         self.service = service
         self.caso_service = caso_service
         self.camaras = None
+        self.carpetaCCTV = None
 
         self._drag_data = {"item": None, "index": None}
         self.drag_item  = None
@@ -236,6 +182,8 @@ class ListaDeCamaras(tk.Tk):
             ("Copiar",    self.copiar_listbox,   BG_SURFACE,  BORDER,        "btn_copiar"),
             ("Limpiar",   self.limpiarListBox,   BG_SURFACE,  BORDER,        "btn_limpiar"),
             ("Eliminar",  self.eliminar_camara,  "#3A1A1A",   "#5A2A2A",     "btn_delete"),
+            ("Actualizar",  self.actualizar,  BG_SURFACE,   BORDER,     "btn_update"),
+
         ]
 
         for label, cmd, bg, hbg, attr in btn_defs:
@@ -294,7 +242,7 @@ class ListaDeCamaras(tk.Tk):
     # ── Helpers UI ────────────────────────────────────────────────────────────
 
     def _set_controls(self, state):
-        for attr in ("btn_confirmar", "btn_copiar", "btn_limpiar", "btn_delete"):
+        for attr in ("btn_confirmar", "btn_copiar", "btn_limpiar", "btn_delete","btn_update"):
             getattr(self, attr).set_state(state)
         # Habilitar/deshabilitar headings ordenables
         if state == "normal":
@@ -309,13 +257,14 @@ class ListaDeCamaras(tk.Tk):
             self.tree.delete(item)
         self.camaras.clear()
         self.service.limpiarRepo()
+        self.carpetaCCTV = None
         self._set_controls("disabled")
 
     def seleccionarCarpeta(self):
-        carpetaCCTV = seleccionarDirectorio()
-        if not carpetaCCTV:
+        self.carpetaCCTV = seleccionarDirectorio()
+        if not self.carpetaCCTV:
             return
-        self.service.cargarVideos(carpetaCCTV)
+        self.service.cargarVideos(self.carpetaCCTV)
         self.camaras = self.service.obtenerVideos()
         self.cargar_camaras()
 
@@ -380,8 +329,10 @@ class ListaDeCamaras(tk.Tk):
     # ── Acciones (sin cambios) ────────────────────────────────────────────────
 
     def enumerar(self):
+        base = Path(self.ruta_destino.get()) / "CCTV" 
+        if not base.exists():
+                base.mkdir(parents=True, exist_ok=True)
         for idx, video in enumerate(self.camaras, 1):
-            base       = Path(self.ruta_destino.get())
             nueva_ruta = base / f"{str(idx).zfill(2)} - {video.nombre}"
             nueva_ruta.mkdir()
             shutil.copy(video.ruta_inicial, nueva_ruta)
@@ -414,9 +365,15 @@ class ListaDeCamaras(tk.Tk):
         self.tree.selection_set(item_id)
         indice = self.tree.index(item_id)
         Reproductor(self, self.camaras[indice], Path(self.ruta_destino.get()), self.service)
-        self.camaras = self.service.obtenerVideos()
-        self.cargar_camaras()
+        self.withdraw()
+   
 
     def crear_caso(self):
         self.caso_service.agregar_videos(self.camaras)
         self.caso_service.crear_nuevo_caso()
+
+    def actualizar(self):
+        self.service.cargarVideos(self.carpetaCCTV)
+        self.camaras = self.service.obtenerVideos()
+        self.cargar_camaras()
+        

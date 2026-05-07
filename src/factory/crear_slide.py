@@ -1,8 +1,5 @@
-import re
+from ..utils import cortar_desde_primera_letra
 
-def cortar_desde_primera_letra(texto: str) -> str:
-    match = re.search(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]", texto)
-    return texto[match.start():] if match else ""
 
 
 class Diapositivas:
@@ -34,7 +31,9 @@ class Diapositivas:
             Top=49.32,    # posición vertical
             Width=720.28,  # ancho
             Height=403.65 # alto
+
         )
+        shape.LockAspectRatio = True
         shape.ZOrder(1)
 
         for shape in new_slide.Shapes:
@@ -74,7 +73,7 @@ class Diapositivas:
 
 
 
-
+            
 
 
 
