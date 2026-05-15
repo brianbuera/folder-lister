@@ -1,40 +1,33 @@
 import tkinter as tk
 from tkinter import ttk
-from ..utils.seleccionar_directorio import seleccionarDirectorio
+from ..utils import seleccionarDirectorio
 from pathlib import Path
-from tkinter import filedialog, messagebox
-import json
+from tkinter import filedialog
 from .reproductor import Reproductor
 from .widgets.flat_button import _FlatButton
 from ..styles.colors import *
 from ..styles.apply_style import _apply_styles
-import shutil
+from ..tools.crop_tool import CropToolWindow
+from ..config import ConfigManager
 
 
-CONFIG_FILE = "config.json"
-
-
-
-
-
+#Ventana principal
 class ListaDeCamaras(tk.Tk):
-    def __init__(self, service, caso_service):
+    def __init__(self, video_service, caso_service):
         super().__init__()
-        self.title("Treeview Reordenable (Drag & Drop)")
-        self.geometry("720x520")
+        self.title("FOLDER LISTER")
+        self.geometry("900x700")
         self.configure(bg=BG_DARK)
-        self.service = service
+        self.video_service = video_service
         self.caso_service = caso_service
-        self.camaras = None
-        self.carpetaCCTV = None
+        self.carpeta_cctv = None
+        # Variable que guarda el estado
+        self.al_frente_var = tk.BooleanVar(value=False)
 
         self._drag_data = {"item": None, "index": None}
-        self.drag_item  = None
-        self.drag_index = None
-        self.target_row = None
-
-        self.ruta_destino = tk.StringVar()
-        self.cargar_configuracion()
+ 
+        self.config_manager = ConfigManager()
+        self.ruta_destino = tk.StringVar(value=self.config_manager.get_ruta_destino())
 
         _apply_styles(self)
         self._build_ui()
@@ -56,12 +49,14 @@ class ListaDeCamaras(tk.Tk):
             activebackground=ACCENT, activeforeground=BORDER,
             relief="flat",
         )
-        menu_archivo.add_command(label="Abrir",            command=self.seleccionarCarpeta)
+        menu_archivo.add_command(label="Abrir",command=self.seleccionarCarpeta)
         menu_archivo.add_separator()
-        menu_archivo.add_command(label="Crear caso base",  command=self.crear_caso)
+        menu_archivo.add_command(label="Agregar capturas a caso actual",command=self.crear_caso)
         menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir",            command=self.quit)
-        barra_menus.add_cascade(label="Archivo", menu=menu_archivo)
+        menu_archivo.add_checkbutton(label="Al frente siempre",variable=self.al_frente_var,command=self.al_frente)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir",command=self.quit)
+        barra_menus.add_cascade(label="Archivo",menu=menu_archivo)
         self.config(menu=barra_menus)
 
         # ── Header ────────────────────────────────────────────────────────────
@@ -105,7 +100,7 @@ class ListaDeCamaras(tk.Tk):
             readonlybackground=BG_SURFACE,
             disabledforeground=TEXT_MUTED,
             relief="flat",
-            bd=4,
+            bd=3,
             insertbackground=ACCENT,
         )
         entry_ruta.pack(fill="x")
@@ -172,17 +167,18 @@ class ListaDeCamaras(tk.Tk):
         self.tree.bind("<B1-Motion>",       self.on_drag_motion, add="+")
         self.tree.bind("<ButtonRelease-1>", self.on_drop,       add="+")
         self.tree.bind("<Double-Button-1>", self.abrir_video,   add="+")
+        self.tree.bind("<Button-3>", self.recortar_capturas)
 
         # ── Barra de botones ──────────────────────────────────────────────────
         btn_bar = tk.Frame(self, bg=BG_DARK)
         btn_bar.pack(fill="x", padx=16, pady=(10, 14))
 
         btn_defs = [
-            ("Confirmar", self.enumerar,        ACCENT,      ACCENT_HOVER,  "btn_confirmar"),
+            ("Confirmar", self.enumerar_camaras,        ACCENT,      ACCENT_HOVER,  "btn_confirmar"),
             ("Copiar",    self.copiar_listbox,   BG_SURFACE,  BORDER,        "btn_copiar"),
-            ("Limpiar",   self.limpiarListBox,   BG_SURFACE,  BORDER,        "btn_limpiar"),
-            ("Eliminar",  self.eliminar_camara,  "#3A1A1A",   "#5A2A2A",     "btn_delete"),
-            ("Actualizar",  self.actualizar,  BG_SURFACE,   BORDER,     "btn_update"),
+            ("Limpiar",   self.vaciar_lista_videos, BG_SURFACE,  BORDER,        "btn_vaciar"),
+            ("Eliminar",  self.eliminar_videos,  "#3A1A1A",   "#5A2A2A",     "btn_delete"),
+            ("restaurar",  self.restaurar,  BG_SURFACE,   BORDER,     "btn_update"),
 
         ]
 
@@ -204,32 +200,6 @@ class ListaDeCamaras(tk.Tk):
 
     # ── Métodos de configuración (sin cambios) ────────────────────────────────
 
-    def cargar_configuracion(self):
-        try:
-            if Path(CONFIG_FILE).exists():
-                with open(CONFIG_FILE, "r") as f:
-                    data = json.load(f)
-                    ruta = data.get("ruta_destino", "")
-                    if Path(ruta).exists():
-                        self.ruta_destino.set(ruta)
-                    else:
-                        self.ruta_destino.set(str(Path.cwd()))
-            else:
-                self.ruta_destino.set(str(Path.cwd()))
-        except Exception as e:
-            print(f"Error cargando config: {e}")
-            self.ruta_destino.set(str(Path.cwd()))
-
-    def guardar_configuracion(self):
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                data = json.load(f)
-            data ["ruta_destino"] = self.ruta_destino.get()
-            with open(CONFIG_FILE, "w") as f:
-                json.dump(data, f)
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo guardar la configuración: {e}")
-
     def cambiar_ruta_destino(self):
         directorio = filedialog.askdirectory(
             initialdir=self.ruta_destino.get(),
@@ -237,12 +207,12 @@ class ListaDeCamaras(tk.Tk):
         )
         if directorio:
             self.ruta_destino.set(directorio)
-            self.guardar_configuracion()
+            self.config_manager.set_ruta_destino(directorio)
 
     # ── Helpers UI ────────────────────────────────────────────────────────────
 
     def _set_controls(self, state):
-        for attr in ("btn_confirmar", "btn_copiar", "btn_limpiar", "btn_delete","btn_update"):
+        for attr in ("btn_confirmar", "btn_copiar", "btn_vaciar", "btn_delete","btn_update"):
             getattr(self, attr).set_state(state)
         # Habilitar/deshabilitar headings ordenables
         if state == "normal":
@@ -252,46 +222,47 @@ class ListaDeCamaras(tk.Tk):
             self.tree.heading("Camara", command=lambda: None)
             self.tree.heading("Hora",   command=lambda: None)
 
-    def limpiarListBox(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        self.camaras.clear()
-        self.service.limpiarRepo()
-        self.carpetaCCTV = None
+    def vaciar_lista_videos(self):
+        self.limpiarTreeView()
+        self.video_service.limpiarRepo()
+        self.carpeta_cctv = None
         self._set_controls("disabled")
 
+
+    def limpiarTreeView(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+
     def seleccionarCarpeta(self):
-        self.carpetaCCTV = seleccionarDirectorio()
-        if not self.carpetaCCTV:
+        self.carpeta_cctv = seleccionarDirectorio()
+        if not self.carpeta_cctv:
             return
-        self.service.cargarVideos(self.carpetaCCTV)
-        self.camaras = self.service.obtenerVideos()
+        self.video_service.cargarVideos(self.carpeta_cctv)
         self.cargar_camaras()
 
     def cargar_camaras(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        for idx, dir in enumerate(self.camaras, 1):
+        self.limpiarTreeView()
+        videos = self.video_service.obtenerVideos()
+        for idx, cam in enumerate(videos, 1):
             tag = "even" if idx % 2 == 0 else "odd"
             self.tree.insert(
                 "", tk.END,
                 values=(
                     str(idx).zfill(2),
-                    dir.nombre,
-                    dir.hora_fecha.strftime("%H:%M:%S"),
-                    dir.hora_fecha.strftime("%Y-%m-%d"),
+                    cam.nombre,
+                    cam.hora_fecha.strftime("%H:%M:%S"),
+                    cam.hora_fecha.strftime("%Y-%m-%d"),
                 ),
                 tags=(tag,),
             )
-        self._set_controls("normal" if self.camaras else "disabled")
+        self._set_controls("normal" if videos else "disabled")
 
     def ordenarPor(self, estrategia):
-        self.camaras = self.service.ordenar(estrategia)
-        self.service.actualizarLista(self.camaras)
+        self.video_service.ordenar(estrategia)
         self.cargar_camaras()
-        self.service.actualizarLista(self.camaras)
 
-    # ── Drag & Drop (sin cambios) ─────────────────────────────────────────────
+    # ── Drag & Drop ─────────────────────────────────────────────
 
     def on_start_drag(self, event):
         item = self.tree.identify_row(event.y)
@@ -310,14 +281,15 @@ class ListaDeCamaras(tk.Tk):
             self.tree.item(target_item, tags=("drag_hover",))
 
     def on_drop(self, event):
+        videos = self.video_service.obtenerVideos()
         target_item = self.tree.identify_row(event.y)
         source_item = self._drag_data["item"]
         if source_item and target_item and source_item != target_item:
             target_index = self.tree.index(target_item)
             source_index = self._drag_data["index"]
-            obj_movido   = self.camaras.pop(source_index)
-            self.camaras.insert(target_index, obj_movido)
-            self.service.actualizarLista(self.camaras)
+            obj_movido   = videos.pop(source_index)
+            videos.insert(target_index, obj_movido)
+            self.video_service.actualizarLista(videos)
             self.cargar_camaras()
             new_id = self.tree.get_children()[target_index]
             self.tree.selection_set(new_id)
@@ -326,18 +298,15 @@ class ListaDeCamaras(tk.Tk):
             idx = self.tree.index(item)
             self.tree.item(item, tags=("even" if (idx + 1) % 2 == 0 else "odd",))
 
-    # ── Acciones (sin cambios) ────────────────────────────────────────────────
+    # ── Acciones ────────────────────────────────────────────────
 
-    def enumerar(self):
-        base = Path(self.ruta_destino.get()) / "CCTV" 
-        if not base.exists():
-                base.mkdir(parents=True, exist_ok=True)
-        for idx, video in enumerate(self.camaras, 1):
-            nueva_ruta = base / f"{str(idx).zfill(2)} - {video.nombre}"
-            nueva_ruta.mkdir()
-            shutil.copy(video.ruta_inicial, nueva_ruta)
+    def enumerar_camaras(self):
+        cctv = Path(self.ruta_destino.get()) / "CCTV" 
+        self.video_service.enumerar_videos(cctv)
         self.btn_confirmar.set_state("disabled")
         self.btn_delete.set_state("disabled")
+
+
 
     def copiar_listbox(self):
         filas = []
@@ -348,15 +317,15 @@ class ListaDeCamaras(tk.Tk):
         self.clipboard_clear()
         self.clipboard_append(texto)
 
-    def eliminar_camara(self):
+
+    def eliminar_videos(self):
         seleccion = self.tree.selection()
         if not seleccion:
             return
         indices = sorted([self.tree.index(i) for i in seleccion], reverse=True)
-        for i in indices:
-            del self.camaras[i]
-        self.service.actualizarLista(self.camaras)
+        self.video_service.eliminar_videos(indices)
         self.cargar_camaras()
+
 
     def abrir_video(self, event):
         item_id = self.tree.identify_row(event.y)
@@ -364,16 +333,31 @@ class ListaDeCamaras(tk.Tk):
             return
         self.tree.selection_set(item_id)
         indice = self.tree.index(item_id)
-        Reproductor(self, self.camaras[indice], Path(self.ruta_destino.get()), self.service)
+        Reproductor(self, indice, Path(self.ruta_destino.get()), self.video_service)
         self.withdraw()
-   
+
+
+    def recortar_capturas(self, event):
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+        self.tree.selection_set(item_id)
+        indice = self.tree.index(item_id)
+        CropToolWindow(self,self.video_service.obtenerVideo(indice))
+
 
     def crear_caso(self):
-        self.caso_service.agregar_videos(self.camaras)
-        self.caso_service.crear_nuevo_caso()
+        template = self.config_manager.get_ruta_template()
+        videos = self.video_service.obtenerVideos()
+        self.caso_service.crear_nuevo_caso(videos, template)
 
-    def actualizar(self):
-        self.service.cargarVideos(self.carpetaCCTV)
-        self.camaras = self.service.obtenerVideos()
+
+    def restaurar(self):
+        self.video_service.cargarVideos(self.carpeta_cctv)
         self.cargar_camaras()
         
+
+
+    def al_frente(self):
+        estado = self.al_frente_var.get()
+        self.attributes('-topmost', estado)

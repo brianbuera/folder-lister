@@ -4,10 +4,11 @@ from src.ui import ListaDeCamaras
 
 if __name__ == "__main__":
 
-    repositorio = VideoRepository()
-    service = VideoService(repositorio)
+    video_repository = VideoRepository()
+    video_service = VideoService(video_repository)
     caso_service =  CasoService()
-    root = ListaDeCamaras(service, caso_service)
+    
+    root = ListaDeCamaras(video_service, caso_service)
     root.mainloop()
 
     

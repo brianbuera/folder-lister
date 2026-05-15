@@ -1,35 +1,25 @@
 from ..infrastructure import PowerPointClient
 from ..factory import Diapositivas
+from ..domains import Diapositiva
 from pathlib import Path
-import json
-
-
-
 
 class CasoService ():
-    
-    def __init__(self):
-         self.ruta_template = self.buscar_template()
 
 
-    def agregar_videos (self, videos):
-            self.videos =  videos[::-1]
 
-    def crear_nuevo_caso(self):
+    def crear_nuevo_caso(self, videos, ruta_template):
         aplicacion = PowerPointClient()
-        presentacion = aplicacion.open_presentacion(self.ruta_template)
-        for v in self.videos:
+        caso_abierto = aplicacion.connect_presentation()
+        if not caso_abierto:
+            return
+        template = aplicacion.open_presentacion(ruta_template)
+
+        for v in videos:
             if v.ruta_screenshot:
-                Diapositivas.crearDiapositiva(presentacion, v)
-    
-    def buscar_template(self):
-         with open("config.json", "r") as f:
-            data = json.load(f)
-            ruta = data.get("ruta_template", "")
-            if Path(ruta).exists():
-                return ruta
-            else:
-                return None
+                Diapositivas.crearDiapositiva(template, caso_abierto, v)
+        aplicacion.close_presentation(template)
+        
+ 
 
 
 

@@ -1,25 +1,22 @@
+from ..domains import RulesRutaVideo
+
 class ValidadorRutasVideos:
+        @staticmethod
+        def validar(rutas_videos):
+            errores = []
+            carpetas = {}
 
-    def __init__(self, rules):
-        self.rules = rules
+            for ruta in rutas_videos:
+                if not RulesRutaVideo.es_video_valido(ruta.name):
+                    errores.append(f"No cumple formato: {ruta}")
+                    continue
 
-    def validar(self, rutas_videos):
-        errores = []
+                carpeta = ruta.parent
+                carpetas.setdefault(carpeta, []).append(ruta)
 
-        for ruta in rutas_videos:
+            for carpeta, videos in carpetas.items():
+                if len(videos) > 1:
+                    errores.append(f"Más de un video en carpeta: {carpeta}")
 
-            carpeta_actual = ruta.parent
-            carpeta_padre = carpeta_actual.parent
-
-            if not carpeta_padre:
-                errores.append(f"Estructura incompleta: {ruta}")
-                continue
-
-            if not (
-                self.rules.es_carpeta_valida(carpeta_actual.name)
-                and self.rules.es_video_valido(ruta.name)
-                
-            ):
-                errores.append(f"No cumple formato: {ruta}")
-
-        return errores
+            return errores
+    

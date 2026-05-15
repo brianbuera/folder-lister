@@ -6,7 +6,7 @@ class Diapositivas:
 
     @staticmethod
     
-    def crearDiapositiva(presentacion, video):
+    def crearDiapositiva(template, caso_abierto, video):
         
         label = "Observaciones de la imagen:"
 
@@ -17,17 +17,18 @@ class Diapositivas:
         }
 
         # diapositiva original
-        slide = presentacion.Slides(6)
-        # crear duplicado
-        duplicated = slide.Duplicate()
-        # normalmente Duplicate devuelve una colección → agarramos la primera
-        new_slide = duplicated.Item(1)
+        slide = template.Slides(6)
+
+        # copiar slide
+        slide.Copy()        
+
+        new_slide = caso_abierto.Slides.Paste(Index=caso_abierto.Slides.Count)
 
         shape = new_slide.Shapes.AddPicture(
-            FileName=video.ruta_screenshot,
+            FileName=video.ruta_screenshot[0],
             LinkToFile=False,
             SaveWithDocument=True,
-            Left=0.28,   # posición horizontal
+            Left=-0,   # posición horizontal
             Top=49.32,    # posición vertical
             Width=720.28,  # ancho
             Height=403.65 # alto

@@ -1,25 +1,32 @@
 
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from pathlib import Path
-from .mensajes import *
 from ..validators import ValidadorRutasVideos
-from ..domains import RulesRutaVideo
+
+
 
 def seleccionarDirectorio():
+
     directorio : Path = Path(filedialog.askdirectory())
-    validador = ValidadorRutasVideos(RulesRutaVideo)
-
-    if not directorio != Path("."):
-        show_error(NO_SELECCIONADO)
+    
+    if not directorio != "":
         return
-
+           
     if not any(directorio.iterdir()):
-        show_error(VACIO)
+        messagebox.showerror("Directorio vacio","El directorio se encuentra vacio")
+        return
+    
+    videos = list(directorio.rglob("*.mkv"))
+
+    if not videos:
+        messagebox.showerror("No hay videos","El directorio no contiene videos")
         return
 
-    validado = validador.validar(directorio.rglob("*.mkv"))
+    validado = ValidadorRutasVideos.validar(videos)
+
     if validado:
-        print(validado)
+        messagebox.showerror("Videos Invalidos", f"Ocurrio un problema al seleccionar el directorio: \n".join(validado))
         return 
     
     return directorio
+   
