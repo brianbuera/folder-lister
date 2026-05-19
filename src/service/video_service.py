@@ -1,6 +1,6 @@
 from ..factory.videofactory import VideoFactory
 from ..repository.videosrepository import VideoRepository
-from ..domains import strategies
+from ..domains.strategies import strategies
 from ..utils import mover_video_enumerado
 
 class VideoService:
@@ -59,7 +59,8 @@ class VideoService:
     #OBTENER VIDEO MEDIANTE INDICE
     def obtener_video(self, indice):
         return self._repo.get_video(indice)
-
+    
+    #MODIFICAR VIDEO MEDIANTE INDICE
     def actualizar_video(self, indice, video):
         self._repo.update_video(indice, video)
         

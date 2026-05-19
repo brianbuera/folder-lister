@@ -1,4 +1,4 @@
-from ..domains import RulesRutaVideo
+from ..domains.rules.rules_ruta_video import RulesRutaVideo
 
 class ValidadorRutasVideos:
         @staticmethod

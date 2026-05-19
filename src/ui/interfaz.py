@@ -252,7 +252,7 @@ class ListaDeCamaras(tk.Tk):
                     str(idx).zfill(2),
                     cam.nombre,
                     cam.hora_fecha.strftime("%H:%M:%S"),
-                    cam.hora_fecha.strftime("%Y-%m-%d"),
+                    cam.hora_fecha.strftime("%d-%m-%Y"),
                 ),
                 tags=(tag,),
             )
@@ -269,6 +269,10 @@ class ListaDeCamaras(tk.Tk):
         if item:
             self._drag_data["item"]  = item
             self._drag_data["index"] = self.tree.index(item)
+            self.tree.selection_set(item)
+            indice = self.tree.index(item)
+            video = self.video_service.obtener_video(indice)
+            print (video)
 
     def on_drag_motion(self, event):
         if not self._drag_data["item"]:
@@ -333,7 +337,9 @@ class ListaDeCamaras(tk.Tk):
             return
         self.tree.selection_set(item_id)
         indice = self.tree.index(item_id)
-        Reproductor(self, indice, Path(self.ruta_destino.get()), self.video_service)
+        Reproductor(self, self.video_service.obtener_video(indice), self.config_manager)
+        print(self.video_service.obtener_video(indice))
+
         self.withdraw()
 
 
@@ -343,7 +349,7 @@ class ListaDeCamaras(tk.Tk):
             return
         self.tree.selection_set(item_id)
         indice = self.tree.index(item_id)
-        CropToolWindow(self,self.video_service.obtenerVideo(indice))
+        CropToolWindow(self,self.video_service.obtener_video(indice))
 
 
     def crear_caso(self):

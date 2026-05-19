@@ -8,7 +8,7 @@ from ..validators import ValidadorRutasVideos
 def seleccionarDirectorio():
 
     directorio : Path = Path(filedialog.askdirectory())
-    
+
     if not directorio != "":
         return
            

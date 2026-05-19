@@ -1,7 +1,5 @@
 from ..infrastructure import PowerPointClient
 from ..factory import Diapositivas
-from ..domains import Diapositiva
-from pathlib import Path
 
 class CasoService ():
 
@@ -15,7 +13,7 @@ class CasoService ():
         template = aplicacion.open_presentacion(ruta_template)
 
         for v in videos:
-            if v.ruta_screenshot:
+            if v.diapositivas:
                 Diapositivas.crearDiapositiva(template, caso_abierto, v)
         aplicacion.close_presentation(template)
         

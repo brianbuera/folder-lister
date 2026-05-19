@@ -2,26 +2,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
-from pathlib import Path
 from ..styles.colors import *
 from ..utils import cortar_desde_primera_letra
 from ..service import ReproductorService
 from .widgets.flat_button import _FlatButton
-from ..domains import Screenshot, Diapositiva
-
+from ..domains.strategies import NuevaDiapositiva, MismaDiapositiva
 class Reproductor(tk.Toplevel):
 
     LIMITE_OBSERVACION = 219
 
-    def __init__(self, parent, indice, destino: Path, video_service):
+    def __init__(self, parent , video, config):
         super().__init__(parent)
         self.parent = parent
-
-        self.service = ReproductorService(
-            i_video = indice,
-            destino      = destino,
-            video_service = video_service,
-        )
+        self.service = ReproductorService(video = video, config = config)
         self.titulo = cortar_desde_primera_letra(self.service.video.nombre)
 
         # ── Dimensiones de visualización ──────────────────────────────────────
@@ -37,9 +30,11 @@ class Reproductor(tk.Toplevel):
         self.resizable(False, False)
 
         self._build_ui()
+        self.bind('<space>', lambda e: self.toggle_play())
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._show_frame(0)
         self._center_window()
+        
 
     # ── Construcción de la UI ─────────────────────────────────────────────────
 
@@ -49,6 +44,7 @@ class Reproductor(tk.Toplevel):
         self._build_video_canvas()
         self._build_slider()
         self._build_bottom_panel()
+
 
     def _build_header(self):
         header = tk.Frame(self, bg=BG_DARK)
@@ -79,6 +75,10 @@ class Reproductor(tk.Toplevel):
 
         counter_row = tk.Frame(slider_area, bg=BG_DARK)
         counter_row.pack(fill="x")
+
+        # ▶️ botón play/pause
+        self.btn = tk.Button(slider_area, text="▶", bg=BG_DARK, fg=ACCENT, height=2, width=4, command=self.toggle_play)
+        self.btn.pack()
 
         tk.Label(counter_row, text="FRAME", font=("Courier", 8),
                  fg=TEXT_MUTED, bg=BG_DARK).pack(side="left")
@@ -144,11 +144,12 @@ class Reproductor(tk.Toplevel):
 
         self.text_input.bind("<KeyPress>", self._verificar_limite)
 
+        
         # Botón capturar
         self.btn_capturar = _FlatButton(
             card,
-            text="⬤  Capturar frame  (calidad original)",
-            command=self._on_capture,
+            text="⬤  Sacar Captura",
+            command=self.sacar_captura,
             bg=ACCENT, fg="white",
             hover_bg=ACCENT_HOVER,
             font=("Courier", 10, "bold"),
@@ -156,8 +157,7 @@ class Reproductor(tk.Toplevel):
             width=PANEL_W - 32,
         )
         self.btn_capturar.pack(fill="x")
-        self._actualizar_estado_boton()
-
+        
     # ── Helpers privados ──────────────────────────────────────────────────────
 
     def _center_window(self):
@@ -170,14 +170,17 @@ class Reproductor(tk.Toplevel):
     def _show_frame(self, frame_id: int):
         img = self.service.get_frame_scaled(frame_id, self.display_w, self.display_h)
         if img is None:
-            return
+            return False
         imgtk = ImageTk.PhotoImage(Image.fromarray(img))
         self.label.imgtk = imgtk
         self.label.configure(image=imgtk)
+        return True
+    
 
     def _actualizar_estado_boton(self):
-        state = "disabled" if self.service.limite_alcanzado else "normal"
-        self.btn_capturar.set_state(state)
+            state = "disabled" if self.service.limite_alcanzado else "normal"
+            self.btn_capturar.set_state(state)
+
 
     # ── Eventos ───────────────────────────────────────────────────────────────
 
@@ -187,46 +190,12 @@ class Reproductor(tk.Toplevel):
         self.frame_label.config(text=f"{frame_id} / {self.service.total_frames - 1}")
         self._show_frame(frame_id)
 
-    def _on_capture(self):
-
         
-        if not messagebox.askokcancel("Confirmación", "¿Seguro que querés guardar la captura?"):
-            return
-        
-        path = self.service.guardar_captura(self.service.current_frame)
-        screenshot = Screenshot(path)
-
-        if not path:
-            return
-        
-        cantidad_diapositiva = self.service.obtener_cantidad_diapositivas()
-
-        if not cantidad_diapositiva:
-            self.service.agregar_nueva_diapositiva()
-            self.service.agregar_screenshot(cantidad_diapositiva-1, screenshot)
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
     def _on_close(self):
         self.service.release()
         self.destroy()
         self.parent.deiconify()
-        self.service.video_service.guardar_diapositivas(self.diapositivas)
+
 
     def _verificar_limite(self, event):
         n = len(self.text_input.get("1.0", "end-1c"))
@@ -242,22 +211,47 @@ class Reproductor(tk.Toplevel):
         ):
             return "break"
 
-    def _abrir_fullscreen(self):
-        fs = tk.Toplevel(self)
-        fs.attributes("-fullscreen", True)
-        fs.configure(bg="black")
-
-        lbl = tk.Label(fs, bg="black")
-        lbl.pack(expand=True)
-
-        w, h  = fs.winfo_screenwidth(), fs.winfo_screenheight()
-        img   = self.service.get_frame_scaled(self.service.current_frame, w, h)
-        if img:
-            imgtk    = ImageTk.PhotoImage(Image.fromarray(img))
-            lbl.imgtk = imgtk
-            lbl.config(image=imgtk)
-
-        fs.bind("<Escape>", lambda e: fs.destroy())
 
 
+      # ▶️⏸ toggle
+    def toggle_play(self):
+        self.service.is_playing = not self.service.is_playing
 
+        if self.service.is_playing:
+            self.btn.config(text="❚❚")
+            self.update_frame()
+        else:
+            self.btn.config(text="▶")
+
+
+    def update_frame(self):
+        if self.service.is_playing:
+            self.slider.set(self.service.current_frame) 
+            self.frame_label.config(text=f"{self.service.current_frame} / {self.service.total_frames - 1}")
+            self.service.current_frame += 1
+            if self.service.current_frame < self.service.total_frames:
+                self.after(30, self.update_frame)
+            else:
+                self.service.is_playing = False
+                self.btn.config(text="▶")
+
+
+    def sacar_captura(self):
+        if not self.service.video.diapositivas:
+            estrategia = NuevaDiapositiva()
+        else:
+            if self.service.limite_alcanzado:
+                nueva = messagebox.askokcancel("Limite de capturas en diapositiva", "Deberá crear una nueva")
+                if nueva:
+                    estrategia = NuevaDiapositiva()
+                else:
+                    self._on_close()
+            else:
+                self.btn_capturar.set_state('disabled')
+                misma = messagebox.askyesno("Diapositiva", "¿Misma diapositiva?")
+                self.btn_capturar.set_state('normal')
+
+                estrategia = MismaDiapositiva() if misma else NuevaDiapositiva()
+
+        observacion = self.text_input.get("1.0", "end-1c")
+        self.service.guardar_captura(self.service.current_frame, observacion, estrategia, len(self.service.video.diapositivas))

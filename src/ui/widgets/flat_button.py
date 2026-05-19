@@ -5,7 +5,7 @@ from ...styles.colors import *
 class _FlatButton(tk.Canvas):
     """Botón rectangular sin relieve, con transición de color al hover."""
 
-    def __init__(self, parent, text, command, bg, fg, hover_bg,
+    def __init__(self, parent, text, command , bg, fg, hover_bg,
                  font, padx=12, pady=8, width=200, **kwargs):
         h = pady * 2 + 22
         super().__init__(parent, bg=parent["bg"], bd=0, highlightthickness=0,
