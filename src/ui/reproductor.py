@@ -112,39 +112,7 @@ class Reproductor(tk.Toplevel):
 
         card = tk.Frame(self, bg=BG_CARD, padx=16, pady=14)
         card.pack(fill="x", padx=16, pady=(10, 16))
-
-        # Encabezado con contador
-        top_row = tk.Frame(card, bg=BG_CARD)
-        top_row.pack(fill="x", pady=(0, 8))
-
-        tk.Label(top_row, text="OBSERVACIÓN", font=("Courier", 9, "bold"),
-                 fg=TEXT_MUTED, bg=BG_CARD).pack(side="left")
-
-        self.conteo = tk.Label(top_row, text=f"0 / {self.LIMITE_OBSERVACION}",
-                               font=("Courier", 9), fg=TEXT_MUTED, bg=BG_CARD)
-        self.conteo.pack(side="right")
-
-        # Textarea
-        text_frame = tk.Frame(card, bg=BORDER, padx=1, pady=1)
-        text_frame.pack(fill="x", pady=(0, 12))
-
-        self.text_input = tk.Text(
-            text_frame, height=5,
-            font=("Courier", 11), bg=BG_SURFACE, fg=TEXT_PRIMARY,
-            insertbackground=ACCENT, relief="flat", wrap="word",
-            padx=10, pady=8, undo=True,
-            selectbackground=ACCENT, selectforeground=TEXT_PRIMARY,
-        )
-        self.text_input.pack(side="left", fill="x", expand=True)
-
-        sb = tk.Scrollbar(text_frame, command=self.text_input.yview,
-                          width=6, bg=BG_SURFACE, troughcolor=BG_SURFACE, relief="flat")
-        self.text_input.configure(yscrollcommand=sb.set)
-        sb.pack(side="right", fill="y")
-
-        self.text_input.bind("<KeyPress>", self._verificar_limite)
-
-        
+  
         # Botón capturar
         self.btn_capturar = _FlatButton(
             card,
@@ -197,19 +165,7 @@ class Reproductor(tk.Toplevel):
         self.parent.deiconify()
 
 
-    def _verificar_limite(self, event):
-        n = len(self.text_input.get("1.0", "end-1c"))
-        if n >= self.LIMITE_OBSERVACION:
-            color = "#FF5A5A"
-        elif n >= 180:
-            color = "#FFB347"
-        else:
-            color = TEXT_MUTED
-        self.conteo.config(text=f"{n} / {self.LIMITE_OBSERVACION}", fg=color)
-        if n >= self.LIMITE_OBSERVACION and event.keysym not in (
-            "BackSpace", "Delete", "Left", "Right", "Up", "Down"
-        ):
-            return "break"
+
 
 
 
@@ -253,5 +209,4 @@ class Reproductor(tk.Toplevel):
 
                 estrategia = MismaDiapositiva() if misma else NuevaDiapositiva()
 
-        observacion = self.text_input.get("1.0", "end-1c")
-        self.service.guardar_captura(self.service.current_frame, observacion, estrategia, len(self.service.video.diapositivas))
+        self.service.guardar_captura(self.service.current_frame, estrategia, len(self.service.video.diapositivas))

@@ -1,5 +1,5 @@
 from ..utils import cortar_desde_primera_letra
-
+from ..utils import cm
 
 
 class Diapositivas:
@@ -72,7 +72,28 @@ class Diapositivas:
                                 texto = texto.replace(key, str(valores[key]))
                             celda.Shape.TextFrame.TextRange.Text = texto
 
+            
 
+    def crear_cuadro_hora(self, slide, hora: str, posicion: dict):
+        # Crear textbox
+        shape = slide.Shapes.AddTextbox(
+            Orientation=1,
+            Left=posicion["x"],
+            Top=posicion["y"],
+            Width=cm(2.04),
+            Height=cm(1.03)
+        )
+
+        # Texto
+        text_range = shape.TextFrame.TextRange
+        text_range.Text = hora
+
+        # Fuente
+        font = text_range.Font
+        font.Name = "Calibri"
+        font.Size = 18
+        font.Bold = True
+        font.Color.ObjectThemeColor = 14
 
             
 

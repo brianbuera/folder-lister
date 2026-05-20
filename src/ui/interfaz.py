@@ -7,7 +7,7 @@ from .reproductor import Reproductor
 from .widgets.flat_button import _FlatButton
 from ..styles.colors import *
 from ..styles.apply_style import _apply_styles
-from ..tools.crop_tool import CropToolWindow
+from ..tools.crop_tool import realizar_recortes
 from ..config import ConfigManager
 
 
@@ -349,7 +349,7 @@ class ListaDeCamaras(tk.Tk):
             return
         self.tree.selection_set(item_id)
         indice = self.tree.index(item_id)
-        CropToolWindow(self,self.video_service.obtener_video(indice))
+        realizar_recortes(self,self.video_service.obtener_video(indice))
 
 
     def crear_caso(self):

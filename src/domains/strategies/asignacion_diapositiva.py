@@ -6,19 +6,15 @@ from ..diapositiva import Diapositiva
 
 class AsignacionDiapositiva(ABC):
     @abstractmethod
-    def asignar(self, video: Video, screenshot: Screenshot, observacion: str):
+    def asignar(self, video: Video, screenshot: Screenshot):
         pass
 
 class NuevaDiapositiva(AsignacionDiapositiva):
-    def asignar(self, video: Video, screenshot: Screenshot, observacion: str):
+    def asignar(self, video: Video, screenshot: Screenshot):
         diapositiva = Diapositiva()
         diapositiva.agregar_captura(screenshot)
-        if observacion:
-            diapositiva.agregar_observacion(observacion)
         video.agregar_diapositiva(diapositiva)
 
 class MismaDiapositiva(AsignacionDiapositiva):
-    def asignar(self, video: Video, screenshot: Screenshot, observacion: str):
+    def asignar(self, video: Video, screenshot: Screenshot):
         video.diapositivas[-1].agregar_captura(screenshot)
-        if observacion:
-            video.diapositivas[-1].agregar_observacion(observacion)

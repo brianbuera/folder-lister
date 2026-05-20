@@ -71,10 +71,10 @@ class ReproductorService:
 
             return path
     
-    def guardar_captura(self, frame_id: int, observacion: str, estrategia: AsignacionDiapositiva, slide_id : int):
+    def guardar_captura(self, frame_id: int, estrategia: AsignacionDiapositiva, slide_id : int):
         path = self._guardar_frame(frame_id, slide_id)
         screenshot = Screenshot(ruta=path)
-        estrategia.asignar(self.video, screenshot, observacion)
+        estrategia.asignar(self.video, screenshot)
 
 
     def release(self):
