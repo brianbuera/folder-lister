@@ -51,10 +51,19 @@ class VideoService:
     
 
     def enumerar_videos(self, destino):
-        if not destino.exists():
-            destino.mkdir(parents=True, exist_ok=True)
+        base = destino
+        n = 1
+
+        while destino.exists():
+            destino = base.parent / f"CCTV{n}"
+            n += 1
+
+        destino.mkdir(parents=True, exist_ok=True)
+
         for idx, video in enumerate(self._repo.videos):
             mover_video_enumerado(idx, video, destino)
+        
+        return destino
 
     #OBTENER VIDEO MEDIANTE INDICE
     def obtener_video(self, indice):

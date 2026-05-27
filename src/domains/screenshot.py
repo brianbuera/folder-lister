@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-
+from datetime import time
 
 @dataclass
 class Screenshot:
@@ -9,6 +9,7 @@ class Screenshot:
     y: float = 0.0
     ancho: float = 0.0
     alto: float = 0.0
+    hora: time | None = None 
 
     @property
     def posicion(self) -> tuple[float, float]:
@@ -23,3 +24,5 @@ class Screenshot:
             f"         Tamaño: {self.ancho:.2f} x {self.alto:.2f}"
         )
     
+    def hora_str(self):
+        return self.hora.strftime("%H:%M")

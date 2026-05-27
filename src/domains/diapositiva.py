@@ -8,12 +8,13 @@ LIMITE = cm(25.40)
 
 @dataclass
 class Diapositiva:
+    id : int = 0
     observacion: str = "Observaciones de la imagen:\n"
     screenshots: list[Screenshot] = field(default_factory=list)
 
     def agregar_captura(self, captura: Screenshot):
         self.screenshots.append(captura)
-        self,self.calcular_layout()
+        self.calcular_layout()
 
     def agregar_observacion(self, obs: str):
         self.observacion += obs

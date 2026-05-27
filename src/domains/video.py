@@ -27,12 +27,20 @@ class Video:
     @property
     def total_capturas(self) -> int:
         return sum(d.cantidad_capturas for d in self.diapositivas) if len(self.diapositivas) > 0 else 0
-        
+    @property
+    def total_diapositivas(self)->int:
+        return len(self.diapositivas)
+    @property
+    def get_hora_fecha_str(self)-> str:
+        return self.hora_fecha.strftime('%H:%M:%S %d-%m-%M')
+    
     def sumar_minutos(self, seg):
         hora = self.hora_fecha + timedelta(seconds=seg)
-        return hora.strftime('%H_%M_%S')
+        return hora.time()
 
-
+    def primer_screenshot(self):
+        return not bool(self.diapositivas)
+    
     def __str__(self):
         contenido = (
             f"\n==================================================\n"

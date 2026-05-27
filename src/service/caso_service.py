@@ -1,5 +1,5 @@
-from ..infrastructure import PowerPointClient
-from ..factory import Diapositivas
+from ..infrastructure.powerpoint_client import PowerPointClient
+from ..factory.crear_slide import Diapositivas
 
 class CasoService ():
 
@@ -9,13 +9,15 @@ class CasoService ():
         aplicacion = PowerPointClient()
         caso_abierto = aplicacion.connect_presentation()
         if not caso_abierto:
-            return
-        template = aplicacion.open_presentacion(ruta_template)
-
+            aplicacion.close_powerpoint_client()
+            return False
+        template = aplicacion.open_presentacion(ruta_template, False)
         for v in videos:
             if v.diapositivas:
                 Diapositivas.crearDiapositiva(template, caso_abierto, v)
         aplicacion.close_presentation(template)
+
+        return True
         
  
 

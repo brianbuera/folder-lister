@@ -3,8 +3,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 from ..styles.colors import *
-from ..utils import cortar_desde_primera_letra
-from ..service import ReproductorService
+from ..utils import obtener_numero_y_nombre
+from ..service.reproductor_service import ReproductorService
 from .widgets.flat_button import _FlatButton
 from ..domains.strategies import NuevaDiapositiva, MismaDiapositiva
 class Reproductor(tk.Toplevel):
@@ -15,7 +15,7 @@ class Reproductor(tk.Toplevel):
         super().__init__(parent)
         self.parent = parent
         self.service = ReproductorService(video = video, config = config)
-        self.titulo = cortar_desde_primera_letra(self.service.video.nombre)
+        self.titulo = obtener_numero_y_nombre(self.service.video.nombre)
 
         # ── Dimensiones de visualización ──────────────────────────────────────
         screen_w = self.winfo_screenwidth()  * 0.80
@@ -54,7 +54,7 @@ class Reproductor(tk.Toplevel):
         tk.Label(header, text=f"  {self.titulo}", font=("Courier", 11, "bold"),
                  fg=TEXT_PRIMARY, bg=BG_DARK).pack(side="left")
 
-        name = self.service.video.ruta_inicial.name[:32]
+        name = self.service.video.get_hora_fecha_str
         tk.Label(header, text=name, font=("Courier", 9),
                  fg=TEXT_MUTED, bg=BG_DARK).pack(side="right")
 
@@ -67,7 +67,6 @@ class Reproductor(tk.Toplevel):
 
         self.label = tk.Label(border, bg=BG_DARK, cursor="crosshair")
         self.label.pack()
-        self.label.bind("<Double-Button-1>", lambda e: self._abrir_fullscreen())
 
     def _build_slider(self):
         slider_area = tk.Frame(self, bg=BG_DARK)
@@ -210,3 +209,4 @@ class Reproductor(tk.Toplevel):
                 estrategia = MismaDiapositiva() if misma else NuevaDiapositiva()
 
         self.service.guardar_captura(self.service.current_frame, estrategia, len(self.service.video.diapositivas))
+        messagebox.showinfo("Captura guardada", "La captura se guardó con exito")

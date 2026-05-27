@@ -19,9 +19,9 @@ class PowerPointClient:
         self.app.Visible = True
 
     # Abrir presentación
-    def open_presentacion(self, archivo):
+    def open_presentacion(self, archivo, visible : bool = True):
         try:
-            return self.app.Presentations.Open(archivo, WithWindow=True)
+            return self.app.Presentations.Open(archivo, WithWindow=visible)
         except Exception as e:
             print(f"Error abriendo archivo: {e}")
             return None

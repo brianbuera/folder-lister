@@ -1,13 +1,15 @@
-from src.service import VideoService, CasoService
-from src.repository import VideoRepository
-from src.ui import ListaDeCamaras
+from src.service.video_service import VideoService
+from src.service.caso_service import  CasoService
+from src.repository.videosrepository import VideoRepository
+from src.ui.interfaz_principal import InterfazPrincipal
+
 
 if __name__ == "__main__":
 
     video_repository = VideoRepository()
     video_service = VideoService(video_repository)
     caso_service =  CasoService()
-    root = ListaDeCamaras(video_service, caso_service)
+    root = InterfazPrincipal(video_service, caso_service)
     root.mainloop()
 
     

@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from ..utils import seleccionarDirectorio
+from tkinter import ttk, messagebox
 from pathlib import Path
 from tkinter import filedialog
 from .reproductor import Reproductor
@@ -8,11 +7,12 @@ from .widgets.flat_button import _FlatButton
 from ..styles.colors import *
 from ..styles.apply_style import _apply_styles
 from ..tools.crop_tool import realizar_recortes
-from ..config import ConfigManager
-
+from ..utils import seleccionarDirectorio, seleccionarDirectorioVideos
+from ..config.config_manager import config
+from .mostrar_infovideo import mostrar_info_video
 
 #Ventana principal
-class ListaDeCamaras(tk.Tk):
+class InterfazPrincipal(tk.Tk):
     def __init__(self, video_service, caso_service):
         super().__init__()
         self.title("FOLDER LISTER")
@@ -23,11 +23,10 @@ class ListaDeCamaras(tk.Tk):
         self.carpeta_cctv = None
         # Variable que guarda el estado
         self.al_frente_var = tk.BooleanVar(value=False)
-
         self._drag_data = {"item": None, "index": None}
  
-        self.config_manager = ConfigManager()
-        self.ruta_destino = tk.StringVar(value=self.config_manager.get_ruta_destino())
+        self.config_manager = config
+        self.ruta_destino = tk.StringVar(value=self.config_manager.ruta_destino)
 
         _apply_styles(self)
         self._build_ui()
@@ -168,6 +167,7 @@ class ListaDeCamaras(tk.Tk):
         self.tree.bind("<ButtonRelease-1>", self.on_drop,       add="+")
         self.tree.bind("<Double-Button-1>", self.abrir_video,   add="+")
         self.tree.bind("<Button-3>", self.recortar_capturas)
+        self.tree.bind("<w>", self.mostrar_infovideo)
 
         # ── Barra de botones ──────────────────────────────────────────────────
         btn_bar = tk.Frame(self, bg=BG_DARK)
@@ -201,13 +201,10 @@ class ListaDeCamaras(tk.Tk):
     # ── Métodos de configuración (sin cambios) ────────────────────────────────
 
     def cambiar_ruta_destino(self):
-        directorio = filedialog.askdirectory(
-            initialdir=self.ruta_destino.get(),
-            title="Seleccionar carpeta de destino",
-        )
+        directorio = seleccionarDirectorio()
         if directorio:
             self.ruta_destino.set(directorio)
-            self.config_manager.set_ruta_destino(directorio)
+            self.config_manager.ruta_destino = directorio
 
     # ── Helpers UI ────────────────────────────────────────────────────────────
 
@@ -235,7 +232,7 @@ class ListaDeCamaras(tk.Tk):
 
 
     def seleccionarCarpeta(self):
-        self.carpeta_cctv = seleccionarDirectorio()
+        self.carpeta_cctv = seleccionarDirectorioVideos()
         if not self.carpeta_cctv:
             return
         self.video_service.cargarVideos(self.carpeta_cctv)
@@ -271,8 +268,18 @@ class ListaDeCamaras(tk.Tk):
             self._drag_data["index"] = self.tree.index(item)
             self.tree.selection_set(item)
             indice = self.tree.index(item)
-            video = self.video_service.obtener_video(indice)
-            print (video)
+
+
+    def mostrar_infovideo(self, event):
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+        self.tree.selection_set(item_id)
+        indice = self.tree.index(item_id)
+        video = self.video_service.obtener_video(indice)
+        print (video)
+        mostrar_info_video(video, self)
+
 
     def on_drag_motion(self, event):
         if not self._drag_data["item"]:
@@ -305,10 +312,15 @@ class ListaDeCamaras(tk.Tk):
     # ── Acciones ────────────────────────────────────────────────
 
     def enumerar_camaras(self):
-        cctv = Path(self.ruta_destino.get()) / "CCTV" 
-        self.video_service.enumerar_videos(cctv)
+        ruta_destino = self.config_manager.ruta_destino
+        if not ruta_destino:
+            messagebox.showerror("No hay ruta destino", "Por favor seleccione una ruta destino")
+            return
+        cctv =  Path(ruta_destino) / "CCTV" 
+        destino = self.video_service.enumerar_videos(cctv)
         self.btn_confirmar.set_state("disabled")
         self.btn_delete.set_state("disabled")
+        messagebox.showinfo("Videos ordenados con exito", f"Los videos se encuentran en la carpeta {destino.name}")
 
 
 
@@ -320,6 +332,8 @@ class ListaDeCamaras(tk.Tk):
         texto = "\n".join(filas)
         self.clipboard_clear()
         self.clipboard_append(texto)
+        messagebox.showinfo("Copiado", f"Lista de videos copiada en portapapeles")
+
 
 
     def eliminar_videos(self):
@@ -339,7 +353,6 @@ class ListaDeCamaras(tk.Tk):
         indice = self.tree.index(item_id)
         Reproductor(self, self.video_service.obtener_video(indice), self.config_manager)
         print(self.video_service.obtener_video(indice))
-
         self.withdraw()
 
 
@@ -353,16 +366,26 @@ class ListaDeCamaras(tk.Tk):
 
 
     def crear_caso(self):
-        template = self.config_manager.get_ruta_template()
+        template = self.config_manager.ruta_template
         videos = self.video_service.obtenerVideos()
-        self.caso_service.crear_nuevo_caso(videos, template)
+        resultado = self.caso_service.crear_nuevo_caso(videos, template)
 
-
+        if resultado:
+            messagebox.showinfo("Proceso completado","Todas las diapositivas se agregaron exitosamente")
+        else:
+            messagebox.showerror(
+                "Error",
+                "Ocurrió un problema al agregar diapositivas.\n\n"
+                "Verifique lo siguiente:\n\n"
+                "1. Tener un caso PowerPoint abierto en alguna de las pantallas.\n"
+                "2. Que el archivo .pptx tenga exactamente el siguiente nombre:\n"
+                "   'Presentación Análisis de Imagen'\n\n"
+                "Recuerde haber realizado las capturas y recortes si eran necesarios."
+            )
     def restaurar(self):
         self.video_service.cargarVideos(self.carpeta_cctv)
         self.cargar_camaras()
         
-
 
     def al_frente(self):
         estado = self.al_frente_var.get()
