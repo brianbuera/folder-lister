@@ -17,7 +17,7 @@ class ReproductorService:
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.current_frame = 0
         self.is_playing = False
-        self.destino = Path(config.ruta_destino) / 'captures'
+        self.destino = Path(config.ruta_destino) / 'captures' if config.ruta_destino else None
 
 
     # ──Video ─────────────────────────────────────────────────────────────────

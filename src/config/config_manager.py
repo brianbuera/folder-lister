@@ -3,9 +3,7 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).parent.parent.parent  # ajustá los niveles según tu estructura
-
 CONFIG_FILE = BASE_DIR / "config.ini"
-
 IMG_DIR = BASE_DIR / "img"
 TEMPLATE_DIR = BASE_DIR / "templates"
 
@@ -16,7 +14,6 @@ class ConfigManager:
     def __init__(self):
         self._config = configparser.ConfigParser()
         self._path = CONFIG_FILE
-
         self._cargar()
 
     # =========================================================

@@ -12,6 +12,7 @@ if __name__ == "__main__":
     root = InterfazPrincipal(video_service, caso_service)
     root.mainloop()
 
+
     
 
  

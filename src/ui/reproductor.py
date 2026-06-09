@@ -34,6 +34,8 @@ class Reproductor(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._show_frame(0)
         self._center_window()
+        if not config.ruta_destino:
+            self.btn_capturar.set_state('disabled')
         
 
     # ── Construcción de la UI ─────────────────────────────────────────────────
