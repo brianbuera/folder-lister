@@ -45,8 +45,7 @@ def seleccionarDirectorioVideos():
         )
         return
 
-    videos = list(directorio.rglob("*.mkv"))
-
+    videos = list(directorio.rglob("*.mkv")) 
     if not videos:
         messagebox.showerror(
             "No hay videos",

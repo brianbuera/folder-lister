@@ -1,6 +1,4 @@
 *.pyc
 venv/
 *.bkp
-detalles_diapositiva.py
-templates/
 .ini
