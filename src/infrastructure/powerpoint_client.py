@@ -14,6 +14,7 @@ class PowerPointClient:
         except pythoncom.com_error:
             # si no existe, crea una nueva
             print("PowerPoint no está abierto.")
+        
 
         self.app.Visible = True
 

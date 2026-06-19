@@ -6,7 +6,7 @@ from ..styles.colors import *
 from ..utils import obtener_numero_y_nombre
 from ..service.reproductor_service import ReproductorService
 from .widgets.flat_button import _FlatButton
-from ..domains.strategies import NuevaDiapositiva, MismaDiapositiva
+from ..domain.strategies import NuevaDiapositiva, MismaDiapositiva
 class Reproductor(tk.Toplevel):
 
     LIMITE_OBSERVACION = 219

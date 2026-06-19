@@ -5,7 +5,7 @@ try:
     from PIL import Image
 except ImportError:
     raise SystemExit("Instalá Pillow: pip install Pillow")
-from ...domains.video import Video
+from ...domain.video import Video
 from .image_panel import ImagePanel
 from .observation_sidebar import ObservationSidebar
 

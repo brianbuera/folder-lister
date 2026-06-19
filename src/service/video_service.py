@@ -1,80 +1,58 @@
-from ..factory.videofactory import VideoFactory
 from ..repository.videosrepository import VideoRepository
-from ..domains.strategies import strategies
-from ..utils import mover_video_enumerado
+from ..domain.video import Video
+from ..utils.obtener_horario import extraer_datetime
+from ..exceptions.video_already_exists_error import VideoAlreadyExistsError
+from pathlib import Path
 
 class VideoService:
+    
     def __init__(self, repo: VideoRepository):
-        self._repo = repo
+        self._video_repository = repo
 
     @property
-    def repo(self):
-        return self._repo
-    
-    def cargarVideos(self, directorio):
-        self.limpiarRepo()
-        rutas = list(directorio.rglob("*.mkv"))
-        for ruta in rutas:
-            self._repo.agregar_video(VideoFactory.crear(ruta))
-
-    def obtenerVideos(self):
-        return self._repo.videos
-    
-    
-    def agregarVideo(self, ruta): 
-        self._repo.agregar_video(VideoFactory.crear(ruta))
-
-
-    def ordenar(self, estrategia):
-        self.actualizarLista(strategies[estrategia](self._repo.videos))
+    def video_repository(self):
+        return self._video_repository
         
+    def crear_video(self, ruta) -> Video: 
+        if self._video_repository.exist_video_by_ruta(ruta):
+            raise VideoAlreadyExistsError(f"El video ya se encuetra cargado")
+        nombre = ruta.parent.name
+        hora_fecha = extraer_datetime(ruta.name)
+        video = Video(nombre=nombre, hora_fecha=hora_fecha, ruta=ruta)
+        self._video_repository.save(video)
+        return video
+            
 
-    def actualizarLista(self, videos):
-        self.repo.videos = videos
+    def crear_videos(self, rutas : Path)-> list[Path]:
+        videos = [self.crear_video(r) for r in rutas]
+        return videos
+    
+    
+    def search_video_by_id(self, indice):
+        return self._video_repository.find_by_id(indice)
     
 
-    def limpiarRepo(self):
-        self.repo.limpiar()
+    def modify_video_by_id(self, indice, video):
+        self._video_repository.update_video(indice, video)
 
 
-    def agregar_screenshot(self, video, path):
-        self.repo.agregar_imagen(video, path)
-    
+    def delete_by_id(self, indice):
+        try:
+            self._video_repository.delete(indice)
+        except IndexError:
+            print("el indice no existe")
 
-    def agregar_observacion(self, video, observacion):
-        self.repo.agregar_observacion(video, observacion)
-
-
-    def eliminar_videos(self, indices):
-        for i in indices:
-            self._repo.eliminar_video(i)
-    
-
-    def enumerar_videos(self, destino):
-        base = destino
-        n = 1
-
-        while destino.exists():
-            destino = base.parent / f"CCTV{n}"
-            n += 1
-
-        destino.mkdir(parents=True, exist_ok=True)
-
-        for idx, video in enumerate(self._repo.videos):
-            mover_video_enumerado(idx, video, destino)
+    def ordenar(self):
+        self._video_repository.ordenar_por_hora_fecha()
         
-        return destino
-
-    #OBTENER VIDEO MEDIANTE INDICE
-    def obtener_video(self, indice):
-        return self._repo.get_video(indice)
     
-    #MODIFICAR VIDEO MEDIANTE INDICE
-    def actualizar_video(self, indice, video):
-        self._repo.update_video(indice, video)
+
+    
+
+
+
         
-    def guardar_diapositiva(self, indice, diapositiva):
-        self._repo.videos[indice].set_diapositivas(diapositiva)
+ 
 
 
     

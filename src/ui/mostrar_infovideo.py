@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from ..domains.video import Video
+from ..domain.video import Video
 
 
 def mostrar_info_video(video: Video, parent: tk.Misc | None = None) -> tk.Toplevel:

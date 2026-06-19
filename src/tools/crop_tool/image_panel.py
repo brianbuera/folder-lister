@@ -1,6 +1,6 @@
 
 from .styles import *
-from ...domains.screenshot import Screenshot
+from ...domain.screenshot import Screenshot
 from tkinter import messagebox
 import tkinter as tk
 

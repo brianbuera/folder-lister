@@ -1,25 +1,21 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
-from tkinter import filedialog
-from .reproductor import Reproductor
 from .widgets.flat_button import _FlatButton
 from ..styles.colors import *
 from ..styles.apply_style import _apply_styles
-from ..tools.crop_tool import realizar_recortes
 from ..utils import seleccionarDirectorio, seleccionarDirectorioVideos
 from ..config.config_manager import config
 from .mostrar_infovideo import mostrar_info_video
 
 #Ventana principal
 class InterfazPrincipal(tk.Tk):
-    def __init__(self, video_service, caso_service):
+    def __init__(self, video_service):
         super().__init__()
         self.title("FOLDER LISTER")
         self.geometry("900x700")
         self.configure(bg=BG_DARK)
         self.video_service = video_service
-        self.caso_service = caso_service
         self.carpeta_cctv = None
         # Variable que guarda el estado
         self.al_frente_var = tk.BooleanVar(value=False)
@@ -323,7 +319,6 @@ class InterfazPrincipal(tk.Tk):
         messagebox.showinfo("Videos ordenados con exito", f"Los videos se encuentran en la carpeta {destino.name}")
 
 
-
     def copiar_listbox(self):
         filas = []
         for item in self.tree.get_children():
@@ -335,7 +330,6 @@ class InterfazPrincipal(tk.Tk):
         messagebox.showinfo("Copiado", f"Lista de videos copiada en portapapeles")
 
 
-
     def eliminar_videos(self):
         seleccion = self.tree.selection()
         if not seleccion:
@@ -345,43 +339,6 @@ class InterfazPrincipal(tk.Tk):
         self.cargar_camaras()
 
 
-    def abrir_video(self, event):
-        item_id = self.tree.identify_row(event.y)
-        if not item_id:
-            return
-        self.tree.selection_set(item_id)
-        indice = self.tree.index(item_id)
-        Reproductor(self, self.video_service.obtener_video(indice), self.config_manager)
-        print(self.video_service.obtener_video(indice))
-        self.withdraw()
-
-
-    def recortar_capturas(self, event):
-        item_id = self.tree.identify_row(event.y)
-        if not item_id:
-            return
-        self.tree.selection_set(item_id)
-        indice = self.tree.index(item_id)
-        realizar_recortes(self,self.video_service.obtener_video(indice))
-
-
-    def crear_caso(self):
-        template = self.config_manager.ruta_template
-        videos = self.video_service.obtenerVideos()
-        resultado = self.caso_service.crear_nuevo_caso(videos, template)
-
-        if resultado:
-            messagebox.showinfo("Proceso completado","Todas las diapositivas se agregaron exitosamente")
-        else:
-            messagebox.showerror(
-                "Error",
-                "Ocurrió un problema al agregar diapositivas.\n\n"
-                "Verifique lo siguiente:\n\n"
-                "1. Tener un caso PowerPoint abierto en alguna de las pantallas.\n"
-                "2. Que el archivo .pptx tenga exactamente el siguiente nombre:\n"
-                "   'Presentación Análisis de Imagen'\n\n"
-                "Recuerde haber realizado las capturas y recortes si eran necesarios."
-            )
     def restaurar(self):
         self.video_service.cargarVideos(self.carpeta_cctv)
         self.cargar_camaras()

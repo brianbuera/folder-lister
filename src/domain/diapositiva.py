@@ -1,14 +1,17 @@
 # src/domain/diapositiva.py
 from dataclasses import dataclass, field
-from .screenshot import Screenshot
 from ..utils import cm
+from .screenshot import Screenshot
+
 PT_W = 960
 PT_H = 540
 LIMITE = cm(25.40)
 
 @dataclass
 class Diapositiva:
-    id : int = 0
+
+    hora : str
+    ubicacion : str
     observacion: str = "Observaciones de la imagen:\n"
     screenshots: list[Screenshot] = field(default_factory=list)
 

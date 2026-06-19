@@ -1,8 +1,8 @@
 # src/services/reproductor_service.py
 from pathlib import Path
 import cv2
-from ..domains.screenshot import Screenshot
-from ..domains.strategies import AsignacionDiapositiva
+from ..domain.screenshot import Screenshot
+from ..domain.strategies import AsignacionDiapositiva
 from ..utils import normalizar
 from datetime import time
 
