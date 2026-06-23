@@ -2,7 +2,8 @@ from ..domain.rules import RulesRutaVideo
 
 class ValidadorRutasVideos:
         @staticmethod
-        def validar(rutas_videos):
+
+        def validar(directorio):
             errores = []
             carpetas = {}
 
@@ -19,4 +20,16 @@ class ValidadorRutasVideos:
                     errores.append(f"Más de un video en carpeta: {carpeta}")
 
             return errores
+        
+
+        def empty(self, directorio):
+            if not any(directorio.iterdir()):
+                return False
+            return True
+
+        def get_path_videos(self, directorio):
+            return list(directorio.rglob("*.mkv")) 
+             
+            
+             
     

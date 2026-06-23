@@ -167,9 +167,6 @@ class Reproductor(tk.Toplevel):
 
 
 
-
-
-
       # ▶️⏸ toggle
     def toggle_play(self):
         self.service.is_playing = not self.service.is_playing

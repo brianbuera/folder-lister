@@ -1,0 +1,12 @@
+@startuml diagrama-de-clases
+
+package domain{
+    Class Video{
+        nombre:str
+        fecha_hora: datetime
+        ruta:Path
+    }
+
+    Class 
+}
+@enduml
