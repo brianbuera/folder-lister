@@ -1,7 +1,6 @@
 import win32com.client
 from pathlib import Path
 import pythoncom
-from ..utils import normalizar
 
 
 class PowerPointClient:
