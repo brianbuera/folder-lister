@@ -18,7 +18,6 @@ def archivo_dentro_de_directorio(archivo, directorio):
     except ValueError:
         return False
 
-
 class Diapositivas:
 
     @staticmethod                     
@@ -63,7 +62,7 @@ class Diapositivas:
 
             #Agregar icono de video    
             if diapositiva == video.diapositivas[-1]:
-                icon_video = Diapositivas.agregar_imagen(new_slide,config.icono_video,cm(23.13),cm(13.9))
+                icon_video = Diapositivas.agregar_imagen(new_slide,config.icono_video,cm(23.17),cm(13.68))
                 ruta_video = video.ruta_enumerada or video.ruta_inicial
                 if archivo_dentro_de_directorio(ruta_video, ruta_ppt.parent):
                     ruta_relativa = relpath(ruta_video, ruta_ppt.parent)
@@ -213,3 +212,5 @@ class Diapositivas:
                 icon_next = Diapositivas.agregar_imagen(slide_actual, config.icono_previous, cm(21), cm(16.49))
                 sub_address = f"{slide_anterior.SlideID},{slide_anterior.SlideIndex},{slide_anterior.Name}"
                 icon_next.ActionSettings(1).Hyperlink.SubAddress = sub_address
+
+    

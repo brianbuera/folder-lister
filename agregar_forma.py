@@ -6,6 +6,55 @@ def rgb(r, g, b):
     return r + (g << 8) + (b << 16)
 
 
+def crear_cartel(slide, texto, left, top):
+    shape = slide.Shapes.AddTextbox(
+        Orientation=1,
+        Left=cm(left),
+        Top=cm(top),
+        Width=cm(1),
+        Height=cm(1)
+    )
+
+
+    shape.Fill.Visible = True
+    shape.Fill.Solid()
+    shape.Fill.ForeColor.ObjectThemeColor = 14
+    shape.Line.Visible = True
+    shape.Line.ForeColor.RGB = rgb(255, 0, 0)
+    shape.Line.Weight = 2
+
+    text_frame = shape.TextFrame
+    text_frame.VerticalAnchor = 3
+    text_frame.MarginLeft = 0
+    text_frame.MarginRight = 0
+    text_frame.MarginTop = 0
+    text_frame.MarginBottom = 0
+    text_frame.WordWrap = False
+
+    # Ajustar tamaño al texto después de configurar texto y fuente
+    shape.TextFrame2.AutoSize = 1
+
+    text_frame.TextRange.Text = texto
+    text_frame.TextRange.ParagraphFormat.Alignment = 2
+    font = text_frame.TextRange.Font
+
+    font.Name = "Calibri"
+    font.Size = 12
+    font.Bold = True
+    font.Color.RGB = 0
+
+    # Ajustar tamaño al texto después de configurar texto y fuente
+    shape.TextFrame2.AutoSize = 0
+
+    # ajustar tamaño
+    shape.Width = shape.Width * 1.30
+    shape.Height = shape.Height * 1.20
+
+
+
+
+
+        
 def crear_cuadro_hora(slide, _left, _top, hora):
         # Crear textbox
         shape = slide.Shapes.AddTextbox(
@@ -32,13 +81,12 @@ def crear_cuadro_hora(slide, _left, _top, hora):
         font.Size = 18
         font.Color.RGB = 0
 
-
 def crear_btn_volver_mapa(slide, texto, mapa = None):
         # Crear textbox
         shape = slide.Shapes.AddShape(
             34,
-            cm(21.1),
-            cm(16.5),
+            cm(21.22),
+            cm(16.55),
             cm(2.33),
             cm(1.97)
         )
@@ -122,15 +170,20 @@ def agregar_encabezado(slide, caso, caratula, fecha, ubicacion):
 
 
 
-
 if __name__ == "__main__":
-    print("App corriendo ...")
+    
+
 
     pptx = PowerPointClient()
     presentacion = pptx.connect_presentation()
+    mapa1 = presentacion.Slides(7)
+    mapa2 = presentacion.Slides(8)
+    mapa3 = presentacion.Slides(9)
+    mapa4 = presentacion.Slides(10)
 
-    slide = presentacion.Slides(7)
-    mapa1 = presentacion.Slides(5)
-    crear_cuadro_hora(slide, 0.26, 14.64, "01:08")
-    crear_btn_volver_mapa(slide, "Mapa 1", mapa1)
-    agregar_encabezado(slide, "4263", "Robo de motevehículo", "18/06/2026", "Chapearouge y Jujuy")
+
+    for i in range(54,61):
+        slide = presentacion.Slides(i)
+        crear_btn_volver_mapa(slide, "Mapa 4", mapa4)
+
+    
