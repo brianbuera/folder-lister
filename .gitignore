@@ -2,3 +2,4 @@
 venv/
 *.bkp
 .ini
+.vscode

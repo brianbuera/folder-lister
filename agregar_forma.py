@@ -111,7 +111,80 @@ def crear_btn_volver_mapa(slide, texto, mapa = None):
         if mapa:
              sub_address = f"{mapa.SlideID},{mapa.SlideIndex},{mapa.Name}"
              shape.ActionSettings(1).Hyperlink.SubAddress = sub_address
+
+def crear_btn_anterior(slide, texto, anterior):
+        # Crear textbox
+        shape = slide.Shapes.AddShape(
+            34,
+            cm(20.3), 
+            cm(16.49),
+            cm(2.33),
+            cm(1.97)
+        )
+        shape.Fill.Visible = True
+        shape.Fill.Solid()
+
+        shape.Fill.ForeColor.RGB = 65535
+        shape.Line.ForeColor.RGB = 0
+        shape.Line.Weight = 2
+
+        text_frame = shape.TextFrame
+        text_frame.MarginLeft = 0
+        text_frame.MarginRight = 0
+        text_frame.MarginTop = 0
+        text_frame.MarginBottom = 0
+
+        # Texto
+        text_range = shape.TextFrame.TextRange
+        text_range.Text = texto
+
+        # Fuente
+        font = text_range.Font
+        font.Name = "Calibri"
+        font.Size = 12
+        font.Color.RGB = 0
+        font.Bold = True
+
+        if anterior:
+             sub_address = f"{anterior.SlideID},{anterior.SlideIndex},{anterior.Name}"
+             shape.ActionSettings(1).Hyperlink.SubAddress = sub_address
+
+def crear_btn_siguiente(slide, texto, siguiente):
+        # Crear textbox
+        shape = slide.Shapes.AddShape(
+            33,
+            cm(22.82), 
+            cm(16.49),
+            cm(2.33),
+            cm(1.97)
+        )
+        shape.Fill.Visible = True
+        shape.Fill.Solid()
+
+        shape.Fill.ForeColor.RGB = 65535
+        shape.Line.ForeColor.RGB = 0
+        shape.Line.Weight = 2
+        text_frame = shape.TextFrame
+        text_frame.MarginLeft = 0
+        text_frame.MarginRight = 0
+        text_frame.MarginTop = 0
+        text_frame.MarginBottom = 0
+        # Texto
+        text_range = shape.TextFrame.TextRange
+        text_range.Text = texto
+
+        # Fuente
+        font = text_range.Font
+        font.Name = "Calibri"
+        font.Size = 12
+        font.Color.RGB = 0
+        font.Bold = True
+
+        if siguiente:
+             sub_address = f"{siguiente.SlideID},{siguiente.SlideIndex},{siguiente.Name}"
+             shape.ActionSettings(1).Hyperlink.SubAddress = sub_address
              
+
 
 
 def agregar_encabezado(slide, caso, caratula, fecha, ubicacion):
@@ -168,22 +241,32 @@ def agregar_encabezado(slide, caso, caratula, fecha, ubicacion):
             font.Color.RGB = 0      # Negro
 
 
+def _on_next_and_previous(presentacion, inicio, fin, mapa):
 
+    for i in range(inicio,fin):
+        if i == inicio:
+            crear_btn_anterior(presentacion.Slides(i), "Mapa 1", mapa)
+            crear_btn_siguiente(presentacion.Slides(i), "Siguiente", presentacion.Slides(i+1))
+        elif i > inicio and i < fin-1:
+            crear_btn_anterior(presentacion.Slides(i), "Anterior", presentacion.Slides(i-1))
+            crear_btn_siguiente(presentacion.Slides(i), "Siguiente", presentacion.Slides(i+1))
+        else:
+            crear_btn_anterior(presentacion.Slides(i), "Anterior", presentacion.Slides(i-1))
+            crear_btn_siguiente(presentacion.Slides(i), "Mapa 1", mapa)
+     
 
 if __name__ == "__main__":
     
-
-
     pptx = PowerPointClient()
     presentacion = pptx.connect_presentation()
-    mapa1 = presentacion.Slides(7)
-    mapa2 = presentacion.Slides(8)
-    mapa3 = presentacion.Slides(9)
-    mapa4 = presentacion.Slides(10)
+    
+             
+             
+         
 
 
-    for i in range(54,61):
-        slide = presentacion.Slides(i)
-        crear_btn_volver_mapa(slide, "Mapa 4", mapa4)
+
+
+
 
     
