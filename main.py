@@ -5,6 +5,9 @@ from src.styles import Theme
 from src.view import FolderListerView
 from src.controller.folder_lister_controller import FolderListerController
 from src.service.video_service import VideoService
+
+
+
 # ════════════════════════════════════════════════════════════════════════
 #  Punto de entrada para prueba visual rápida (sin Controlador ni Modelo)
 # ════════════════════════════════════════════════════════════════════════

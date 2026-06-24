@@ -9,9 +9,8 @@ class VideoService:
     def __init__(self):
         self._video_repository = VideoRepository()
 
-    @property
-    def video_repository(self):
-        return self._video_repository
+    def get_videos(self):
+        return _to_dict(self._video_repository.videos)
     
     #De una direccion de video crear un objeto Video
     def create_video(self, ruta) -> Video: 
@@ -26,8 +25,6 @@ class VideoService:
     # De de una lista de rutas crear una lista de videos
     def create_videos(self, rutas : list[Path])-> list[Video]:
         videos = [self.create_video(r) for r in rutas]
-        for v in videos:
-            self._video_repository.save(v)
         return _to_dict(videos)
     
     # Buscar un video por indide de ubicacion en lista 

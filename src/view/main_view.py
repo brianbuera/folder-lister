@@ -17,14 +17,14 @@ from PySide6.QtWidgets import (
     QLabel, QTableWidget, QTableWidgetItem, QPushButton,
     QHeaderView, QFrame, QSlider, QSizePolicy, QScrollArea,
     QGridLayout, QComboBox, QAbstractItemView, QButtonGroup,
-    QFileDialog,
+    QFileDialog
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPalette, QFont, QAction
 
 from ..styles import Theme, load_qss
 from .widgets import (
-    NavButton, VideoButton,
+    NavButton, ActionButton,
     PaginationButton, ArrowButton,
     PlayerControlBtn, SectionLabel, ThumbnailWidget,
 )
@@ -51,6 +51,7 @@ class FolderListerView(QMainWindow):
 
     # ── Señales ─────────────────────────────────────────────────────────
     sig_importar_videos      = Signal(str)
+    sig_eliminar_video      = Signal(int)
     sig_ver_video        = Signal(int)
     sig_guardar          = Signal()
     sig_pagina           = Signal(int)
@@ -106,13 +107,23 @@ class FolderListerView(QMainWindow):
         bar.setNativeMenuBar(False)
         archivo = bar.addMenu("Archivo  ▾")
 
+        self.act_abrir_proyecto = QAction("Abrir", self)
         self.act_importar_videos = QAction("Importar videos", self)
+        self.act_guardar = QAction("Guardar", self)
+        self.act_guardar_como = QAction("Guardar como", self)
         self.act_salir = QAction("Salir", self)
 
+        archivo.addAction(self.act_abrir_proyecto)
         archivo.addAction(self.act_importar_videos)
+        archivo.addSeparator()
+        archivo.addAction(self.act_guardar)
+        archivo.addAction(self.act_guardar_como)
+        archivo.addSeparator()
         archivo.addAction(self.act_salir)
+
         
         self.act_importar_videos.triggered.connect(self._on_importar_videos)
+        self.act_salir.triggered.connect(self.close)
 
     # ── Toolbar ─────────────────────────────────────────────────────────
     def _build_toolbar(self) -> QWidget:
@@ -235,17 +246,24 @@ class FolderListerView(QMainWindow):
 
         return table
     
-    def _create_video_button_cell(self, row: int, active: bool = False) -> QWidget:
+    def _create_actions_buttons_cell(self, row: int, active: bool = False) -> QWidget:
         cell = QWidget()
         cell.setStyleSheet("background: transparent;")
 
         cell_layout = QHBoxLayout(cell)
-        cell_layout.setContentsMargins(8, 4, 8, 4)
+        cell_layout.setContentsMargins(4, 4, 4, 4)
+        cell_layout.setSpacing(4)
 
-        btn = VideoButton(active=active)
-        btn.clicked.connect(lambda _, r=row: self._on_ver_video(r))
+        btn_ver = ActionButton("▶")
+        btn_eliminar = ActionButton("🗑")
 
-        cell_layout.addWidget(btn)
+
+        btn_ver.clicked.connect(lambda _, r=row: self._on_ver_video(r))
+        btn_eliminar.clicked.connect(lambda _, r=row: self._on_delete_video(r))
+
+        cell_layout.addWidget(btn_ver)
+        cell_layout.addWidget(btn_eliminar)
+
         return cell
         
     def _build_bottom_bar(self) -> QWidget:
@@ -465,6 +483,10 @@ class FolderListerView(QMainWindow):
         self.table.selectRow(row)
         self.sig_ver_video.emit(row)
 
+    def _on_delete_video(self, row: int):
+        self.table.selectRow(row)
+        self.sig_eliminar_video.emit(row)
+
     # ════════════════════════════════════════════════════════════════════
     #  API PÚBLICA — métodos llamados por el Controlador
     # ════════════════════════════════════════════════════════════════════
@@ -493,6 +515,8 @@ class FolderListerView(QMainWindow):
         self.lbl_duration.setText(time_str)
 
     def update_table_data(self, cameras: list[dict]):
+        if self.table.rowCount():
+            self.table.setRowCount(0)
         """
         Recarga la tabla con datos del Modelo.
 
@@ -525,7 +549,7 @@ class FolderListerView(QMainWindow):
             self.table.setCellWidget(
                 i,
                 4,
-                self._create_video_button_cell(i, active=(i == 0))
+                self._create_actions_buttons_cell(i, active=(i == 0))
             )
 
         if cameras:
@@ -535,7 +559,6 @@ class FolderListerView(QMainWindow):
         """Marca el botón de página correspondiente como activo."""
         for btn in self.page_buttons:
             btn.setChecked(btn.text() == str(page))
-
 
 
     # ── Importar videos ─────────────────────────────────────────────────────────

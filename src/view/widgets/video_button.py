@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QPushButton
 from ...styles import load_qss
 
 
-class VideoButton(QPushButton):
+class ActionButton(QPushButton):
     """
     Botón de acción para reproducir el video de una cámara.
 
@@ -19,9 +19,9 @@ class VideoButton(QPushButton):
                 Si False, con borde y fondo transparente.
     """
 
-    def __init__(self, active: bool = False, parent=None):
-        super().__init__("Ver video", parent)
-        self.setFixedSize(90, 28)
+    def __init__(self, icon, active: bool = False, parent=None):
+        super().__init__(icon, parent)
+        self.setFixedSize(23, 23)
         self._qss = load_qss("video_button")
         self.set_active(active)
 

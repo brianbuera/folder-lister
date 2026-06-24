@@ -25,7 +25,7 @@ class VideoRepository:
 
     #Actualizar un video
     def update(self, indice, video):
-        self.videos[indice] = video
+        self._videos[indice] = video
 
     #Verificar existencia de un video con un ruta especifica
     def exist_video_by_ruta(self, ruta : Path) -> Video | None:
