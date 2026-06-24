@@ -32,6 +32,8 @@ class VideoRepository:
         return any(video.ruta == ruta for video in self._videos)
     
 
+    def sort_by_time(self):
+        self._videos.sort(key=lambda video:video.hora_fecha)
 
 
 

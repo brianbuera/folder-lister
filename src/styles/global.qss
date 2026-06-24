@@ -61,6 +61,16 @@ QHeaderView::section {
     text-transform: uppercase;
 }
 
+QHeaderView::section:hover {
+    background-color: #1f2937;
+    color: white;
+}
+
+QHeaderView::section:pressed {
+    background-color: #111827;
+    color: white;
+}
+
 /* ── Scrollbar ────────────────────────────────────────────── */
 QScrollBar:vertical {
     background: {{BG_DARK}};

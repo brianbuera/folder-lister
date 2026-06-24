@@ -52,6 +52,7 @@ class FolderListerView(QMainWindow):
     # ── Señales ─────────────────────────────────────────────────────────
     sig_importar_videos      = Signal(str)
     sig_eliminar_video      = Signal(int)
+    sig_ordenar_por_hora = Signal()
     sig_ver_video        = Signal(int)
     sig_guardar          = Signal()
     sig_pagina           = Signal(int)
@@ -67,14 +68,13 @@ class FolderListerView(QMainWindow):
     sig_seek             = Signal(int)
     sig_volume           = Signal(int)
 
-    def __init__(self, controller = None):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("FOLDER LISTER")
         self.setMinimumSize(1200, 820)
         self.resize(1340, 860)
         self.setStyleSheet(load_qss("global"))
         self._build_ui()
-        self.controller = controller
 
     # ════════════════════════════════════════════════════════════════════
     #  CONSTRUCCIÓN DE LA UI
@@ -231,6 +231,9 @@ class FolderListerView(QMainWindow):
         hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
         hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         hh.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+
+        hh.sectionClicked.connect(self._on_header_clicked)
+
         table.setColumnWidth(0, 48)
         table.setColumnWidth(2, 90)
         table.setColumnWidth(3, 110)
@@ -246,25 +249,7 @@ class FolderListerView(QMainWindow):
 
         return table
     
-    def _create_actions_buttons_cell(self, row: int, active: bool = False) -> QWidget:
-        cell = QWidget()
-        cell.setStyleSheet("background: transparent;")
 
-        cell_layout = QHBoxLayout(cell)
-        cell_layout.setContentsMargins(4, 4, 4, 4)
-        cell_layout.setSpacing(4)
-
-        btn_ver = ActionButton("▶")
-        btn_eliminar = ActionButton("🗑")
-
-
-        btn_ver.clicked.connect(lambda _, r=row: self._on_ver_video(r))
-        btn_eliminar.clicked.connect(lambda _, r=row: self._on_delete_video(r))
-
-        cell_layout.addWidget(btn_ver)
-        cell_layout.addWidget(btn_eliminar)
-
-        return cell
         
     def _build_bottom_bar(self) -> QWidget:
         bar = QWidget()
@@ -329,57 +314,52 @@ class FolderListerView(QMainWindow):
         hdr = QHBoxLayout()
         hdr.addWidget(SectionLabel("▶", "REPRODUCTOR"))
         hdr.addStretch()
-        self.lbl_cam_active = QLabel("CAM 01 - Acceso Principal")
+
+        self.lbl_cam_active = QLabel("Sin video seleccionado")
         self.lbl_cam_active.setProperty("cam_active_label", "true")
         self.lbl_cam_active.setStyleSheet(load_qss("panels"))
+
         hdr.addWidget(self.lbl_cam_active)
         layout.addLayout(hdr)
 
-        # Área de video
-        self.video_area = QLabel()
+        # Área real donde VLC va a dibujar el video
+        self.video_area = QFrame()
         self.video_area.setObjectName("video_area")
         self.video_area.setMinimumHeight(230)
         self.video_area.setStyleSheet(load_qss("panels"))
-        self.video_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.video_area.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
         )
-
-        # Overlays
-        self._overlay_ts = QLabel("24/05/2025  08:15:32", self.video_area)
-        self._overlay_ts.setProperty("video_overlay", "true")
-        self._overlay_ts.setStyleSheet(load_qss("panels"))
-        self._overlay_ts.move(8, 8)
-        self._overlay_ts.adjustSize()
-
-        self._overlay_cam = QLabel("CAM 01", self.video_area)
-        self._overlay_cam.setProperty("video_overlay", "true")
-        self._overlay_cam.setStyleSheet(load_qss("panels"))
-        self._overlay_cam.adjustSize()
 
         layout.addWidget(self.video_area)
 
-        # Barra de progreso
+        # Barra de progreso vacía
         self.slider_progress = QSlider(Qt.Orientation.Horizontal)
         self.slider_progress.setRange(0, 100)
-        self.slider_progress.setValue(10)
+        self.slider_progress.setValue(0)
         self.slider_progress.valueChanged.connect(self.sig_seek.emit)
         layout.addWidget(self.slider_progress)
 
-        # Tiempos
+        # Tiempos vacíos
         times = QHBoxLayout()
-        self.lbl_current = QLabel("00:00:15")
+
+        self.lbl_current = QLabel("00:00:00")
         self.lbl_current.setProperty("time_label", "true")
         self.lbl_current.setStyleSheet(load_qss("panels"))
-        self.lbl_duration = QLabel("00:02:37")
+
+        self.lbl_duration = QLabel("00:00:00")
         self.lbl_duration.setProperty("time_label", "true")
         self.lbl_duration.setStyleSheet(load_qss("panels"))
+
         times.addWidget(self.lbl_current)
         times.addStretch()
         times.addWidget(self.lbl_duration)
+
         layout.addLayout(times)
 
         layout.addWidget(self._build_player_controls())
+
         return panel
 
     def _build_player_controls(self) -> QWidget:
@@ -402,7 +382,7 @@ class FolderListerView(QMainWindow):
 
         self.cmb_speed = QComboBox()
         self.cmb_speed.setObjectName("cmb_speed")
-        self.cmb_speed.addItems(["0.5x", "1.00x", "1.5x", "2.0x"])
+        self.cmb_speed.addItems(["0.5x", "1.00x", "4.0x", "8.0x","16.0x"])
         self.cmb_speed.setCurrentIndex(1)
         self.cmb_speed.setFixedWidth(72)
         self.cmb_speed.setStyleSheet(load_qss("player"))
@@ -433,6 +413,18 @@ class FolderListerView(QMainWindow):
         layout.addWidget(self.slider_vol)
 
         return bar
+    
+    # ── Resetear Reproductor ────────────────────────────────────────────────────────
+    def reset_player_view(self):
+        self.lbl_cam_active.setText("Sin video seleccionado")
+        self.slider_progress.blockSignals(True)
+        self.slider_progress.setValue(0)
+        self.slider_progress.blockSignals(False)
+        self.lbl_current.setText("00:00:00")
+        self.lbl_duration.setText("00:00:00")
+
+    def set_video_title(self, title: str):
+        self.lbl_cam_active.setText(title)
 
     # ── Capturas ────────────────────────────────────────────────────────
     def _build_captures_panel(self) -> QWidget:
@@ -486,6 +478,10 @@ class FolderListerView(QMainWindow):
     def _on_delete_video(self, row: int):
         self.table.selectRow(row)
         self.sig_eliminar_video.emit(row)
+
+    def _on_header_clicked(self, column: int):
+        if column == 2:  # Columna HORA
+            self.sig_ordenar_por_hora.emit()
 
     # ════════════════════════════════════════════════════════════════════
     #  API PÚBLICA — métodos llamados por el Controlador
@@ -555,6 +551,27 @@ class FolderListerView(QMainWindow):
         if cameras:
             self.table.selectRow(0)
 
+    #   crear botones play y eliminar
+    def _create_actions_buttons_cell(self, row: int, active: bool = False) -> QWidget:
+        cell = QWidget()
+        cell.setStyleSheet("background: transparent;")
+
+        cell_layout = QHBoxLayout(cell)
+        cell_layout.setContentsMargins(4, 4, 4, 4)
+        cell_layout.setSpacing(4)
+
+        btn_ver = ActionButton("▶")
+        btn_eliminar = ActionButton("🗑")
+
+
+        btn_ver.clicked.connect(lambda _, r=row: self._on_ver_video(r))
+        btn_eliminar.clicked.connect(lambda _, r=row: self._on_delete_video(r))
+
+        cell_layout.addWidget(btn_ver)
+        cell_layout.addWidget(btn_eliminar)
+
+        return cell
+    
     def set_active_page(self, page: int):
         """Marca el botón de página correspondiente como activo."""
         for btn in self.page_buttons:

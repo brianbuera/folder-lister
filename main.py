@@ -4,6 +4,7 @@ from PySide6.QtGui import QColor, QPalette
 from src.styles import Theme
 from src.view import FolderListerView
 from src.controller.folder_lister_controller import FolderListerController
+from src.controller.reproductor_controller import PlayerController
 from src.service.video_service import VideoService
 
 
@@ -12,7 +13,7 @@ from src.service.video_service import VideoService
 #  Punto de entrada para prueba visual rápida (sin Controlador ni Modelo)
 # ════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    service = VideoService()
+    video_service = VideoService()
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
@@ -30,8 +31,9 @@ if __name__ == "__main__":
     app.setPalette(palette)
 
     window = FolderListerView()
-    controller = FolderListerController(service, window)
-    controller.start_app()
+    player_controller = PlayerController(window, video_service)
+    main_controller = FolderListerController(video_service, window)
+    main_controller.start_app()
     sys.exit(app.exec())
 
 

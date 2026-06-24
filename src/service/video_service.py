@@ -4,6 +4,9 @@ from ..utils.features_horario import extraer_datetime
 from ..exceptions.video_already_exists_error import VideoAlreadyExistsError
 from pathlib import Path
 from ..mapper.to_dict import _to_dict
+
+
+
 class VideoService:
     
     def __init__(self):
@@ -46,8 +49,9 @@ class VideoService:
             print("el indice no existe")
 
     def sort_by_time(self):
+        self._video_repository.sort_by_time()
         videos = self._video_repository.videos
-        return sorted(videos, key= lambda x: x.hora_fecha)
+        return _to_dict(videos)
 
         
     
