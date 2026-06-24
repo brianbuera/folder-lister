@@ -1,0 +1,27 @@
+/* ═══════════════════════════════════════════════════════
+   video_button.qss  —  Botón "Ver video" en filas de tabla
+   ═══════════════════════════════════════════════════════ */
+
+/* Variante activa (fila seleccionada) */
+QPushButton[video_active="true"] {
+    background-color: {{ACCENT_BLUE}};
+    color: {{TEXT_WHITE}};
+    border: none;
+    border-radius: {{RADIUS_SM}};
+    font-size: {{SIZE_SM}};
+    font-weight: 500;
+}
+
+/* Variante inactiva */
+QPushButton[video_active="false"] {
+    background-color: transparent;
+    color: {{TEXT_PRIMARY}};
+    border: 1px solid {{BORDER_BLUE}};
+    border-radius: {{RADIUS_SM}};
+    font-size: {{SIZE_SM}};
+    font-weight: 500;
+}
+QPushButton[video_active="false"]:hover {
+    background-color: {{ACCENT_BLUE}};
+    color: {{TEXT_WHITE}};
+}

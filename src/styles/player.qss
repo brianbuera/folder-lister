@@ -1,0 +1,65 @@
+/* ═══════════════════════════════════════════════════════
+   player.qss  —  Controles del reproductor de video
+   ═══════════════════════════════════════════════════════ */
+
+/* Botones de control (play / pause / stop / captura…) */
+QPushButton[player_ctrl="true"] {
+    background-color: {{BG_CARD}};
+    color: {{TEXT_PRIMARY}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_MD}};
+    font-size: 14px;
+}
+QPushButton[player_ctrl="true"]:hover {
+    background-color: {{ACCENT_BLUE}};
+    border-color: {{ACCENT_BLUE}};
+}
+QPushButton[player_ctrl="true"]:pressed {
+    background-color: {{ACCENT_PRESS}};
+}
+
+/* Botón guardar */
+QPushButton#btn_guardar {
+    background-color: {{ACCENT_BLUE}};
+    color: {{TEXT_WHITE}};
+    border: none;
+    border-radius: {{RADIUS_MD}};
+    font-size: {{SIZE_BASE}};
+    font-weight: 600;
+    padding: 0 20px;
+}
+QPushButton#btn_guardar:hover  { background-color: {{ACCENT_HOVER}}; }
+QPushButton#btn_guardar:pressed { background-color: {{ACCENT_PRESS}}; }
+
+/* Botón de configuración (toolbar) */
+QPushButton#btn_settings {
+    background: transparent;
+    color: {{TEXT_SECOND}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_MD}};
+    font-size: 16px;
+}
+QPushButton#btn_settings:hover {
+    color: {{TEXT_PRIMARY}};
+    border-color: {{ACCENT_BLUE}};
+}
+
+/* ComboBox de velocidad */
+QComboBox#cmb_speed {
+    background-color: {{BG_CARD}};
+    color: {{TEXT_PRIMARY}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_MD}};
+    padding: 4px 8px;
+    font-size: {{SIZE_SM}};
+}
+QComboBox#cmb_speed::drop-down {
+    border: none;
+    width: 18px;
+}
+QComboBox#cmb_speed QAbstractItemView {
+    background-color: {{BG_CARD}};
+    color: {{TEXT_PRIMARY}};
+    selection-background-color: {{ACCENT_BLUE}};
+    border: 1px solid {{BORDER_DIM}};
+}

@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════════════════
+   nav_button.qss  —  Botones de navegación superior
+   (VIDEOS / DIAPOSITIVAS)
+   ═══════════════════════════════════════════════════════ */
+
+/* Estado activo / checked */
+QPushButton[nav_active="true"] {
+    background-color: transparent;
+    color: {{TEXT_PRIMARY}};
+    border: 1px solid {{BORDER_BLUE}};
+    border-radius: {{RADIUS_MD}};
+    padding: 0 20px;
+    font-size: {{SIZE_BASE}};
+    font-weight: 500;
+}
+
+/* Estado inactivo */
+QPushButton[nav_active="false"] {
+    background-color: transparent;
+    color: {{TEXT_SECOND}};
+    border: 1px solid transparent;
+    border-radius: {{RADIUS_MD}};
+    padding: 0 20px;
+    font-size: {{SIZE_BASE}};
+    font-weight: 500;
+}
+QPushButton[nav_active="false"]:hover {
+    color: {{TEXT_PRIMARY}};
+    border: 1px solid {{BORDER_DIM}};
+}

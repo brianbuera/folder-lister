@@ -1,0 +1,102 @@
+/* ═══════════════════════════════════════════════════════
+   panels.qss  —  Paneles, tarjetas y secciones
+   ═══════════════════════════════════════════════════════ */
+
+/* Panel genérico con borde */
+QWidget[panel="true"] {
+    background-color: {{BG_PANEL}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_LG}};
+}
+
+/* Cabecera interna de panel */
+QWidget[panel_header="true"] {
+    background-color: {{BG_HEADER}};
+    border-bottom: 1px solid {{BORDER_DIM}};
+    border-radius: 8px 8px 0 0;
+}
+
+/* Barra inferior (paginación + guardar) */
+QWidget[bottom_bar="true"] {
+    background-color: {{BG_PANEL}};
+    border-top: 1px solid {{BORDER_DIM}};
+    border-radius: 0 0 {{RADIUS_LG}} {{RADIUS_LG}};
+}
+
+/* Área de video */
+QLabel#video_area {
+    background-color: {{BG_VIDEO}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_SM}};
+    color: {{TEXT_SECOND}};
+}
+
+/* Overlay de timestamp sobre el video */
+QLabel[video_overlay="true"] {
+    background-color: rgba(0, 0, 0, 165);
+    color: {{TEXT_WHITE}};
+    font-size: {{SIZE_XS}};
+    font-family: 'Consolas', monospace;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: none;
+}
+
+/* Miniatura de captura */
+QFrame[thumbnail="true"] {
+    background-color: {{BG_THUMB}};
+    border: 2px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_SM}};
+}
+QFrame[thumbnail_active="true"] {
+    background-color: {{BG_THUMB}};
+    border: 2px solid {{ACCENT_BLUE}};
+    border-radius: {{RADIUS_SM}};
+}
+
+/* Timestamp dentro de miniatura */
+QLabel[thumb_ts="true"] {
+    background-color: {{BG_DARK}};
+    color: {{TEXT_PRIMARY}};
+    font-size: 10px;
+    font-family: 'Consolas', monospace;
+    border: none;
+    border-top: 1px solid {{BORDER_DIM}};
+}
+
+/* Etiqueta de sección (ícono + texto en mayúsculas) */
+QLabel[section_label="true"] {
+    color: {{TEXT_PRIMARY}};
+    font-size: {{SIZE_SM}};
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+/* Etiqueta de cámara activa en reproductor */
+QLabel[cam_active_label="true"] {
+    color: {{TEXT_ACCENT}};
+    font-size: {{SIZE_SM}};
+    font-weight: 500;
+}
+
+/* Etiquetas de tiempo (00:00:15) */
+QLabel[time_label="true"] {
+    color: {{TEXT_SECOND}};
+    font-size: {{SIZE_XS}};
+    font-family: 'Consolas', monospace;
+}
+
+/* Título logo en toolbar */
+QLabel#lbl_title {
+    color: {{TEXT_PRIMARY}};
+    font-size: {{SIZE_BASE}};
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-family: 'Consolas', monospace;
+}
+
+/* Punto de estado */
+QLabel#status_dot {
+    color: {{STATUS_DOT}};
+    font-size: 10px;
+}

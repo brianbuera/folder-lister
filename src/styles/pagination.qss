@@ -1,0 +1,39 @@
+/* ═══════════════════════════════════════════════════════
+   pagination.qss  —  Botones de paginación y flechas
+   ═══════════════════════════════════════════════════════ */
+
+/* Número activo */
+QPushButton[page_active="true"] {
+    background-color: {{ACCENT_BLUE}};
+    color: {{TEXT_WHITE}};
+    border: none;
+    border-radius: {{RADIUS_MD}};
+    font-size: {{SIZE_BASE}};
+    font-weight: 600;
+}
+
+/* Número inactivo */
+QPushButton[page_active="false"] {
+    background-color: transparent;
+    color: {{TEXT_SECOND}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_MD}};
+    font-size: {{SIZE_BASE}};
+}
+QPushButton[page_active="false"]:hover {
+    color: {{TEXT_PRIMARY}};
+    border-color: {{ACCENT_BLUE}};
+}
+
+/* Flechas anterior / siguiente */
+QPushButton[arrow="true"] {
+    background-color: transparent;
+    color: {{TEXT_SECOND}};
+    border: 1px solid {{BORDER_DIM}};
+    border-radius: {{RADIUS_MD}};
+    font-size: 14px;
+}
+QPushButton[arrow="true"]:hover {
+    color: {{TEXT_PRIMARY}};
+    border-color: {{ACCENT_BLUE}};
+}

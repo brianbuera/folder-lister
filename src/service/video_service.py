@@ -3,7 +3,7 @@ from ..domain.video import Video
 from ..utils.features_horario import extraer_datetime
 from ..exceptions.video_already_exists_error import VideoAlreadyExistsError
 from pathlib import Path
-
+from ..mapper.to_dict import _to_dict
 class VideoService:
     
     def __init__(self):
@@ -28,7 +28,7 @@ class VideoService:
         videos = [self.create_video(r) for r in rutas]
         for v in videos:
             self._video_repository.save(v)
-        return videos
+        return _to_dict(videos)
     
     # Buscar un video por indide de ubicacion en lista 
     def search_video_by_id(self, indice) -> Video:
