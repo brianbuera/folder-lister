@@ -4,6 +4,7 @@ from .pagination         import PaginationButton, ArrowButton
 from .player_control_btn import PlayerControlBtn
 from .section_label      import SectionLabel
 from .thumbnail_widget   import ThumbnailWidget
+from .reproductor_widget import ReproductorWidget
 
 __all__ = [
     "NavButton",
@@ -13,4 +14,5 @@ __all__ = [
     "PlayerControlBtn",
     "SectionLabel",
     "ThumbnailWidget",
+    "ReproductorWidget"
 ]
