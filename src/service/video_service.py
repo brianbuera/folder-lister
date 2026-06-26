@@ -21,7 +21,13 @@ class VideoService:
             raise VideoAlreadyExistsError(f"El video ya se encuetra cargado")
         nombre = obtener_numero_y_nombre(ruta.parent.name)
         hora_fecha = extraer_datetime(ruta.name)
-        video = Video(nombre=nombre, hora_fecha=hora_fecha, ruta=ruta)
+
+        video = Video(
+            id=None,
+            nombre=nombre,
+            hora_fecha=hora_fecha,
+            ruta=ruta)
+        
         self._video_repository.save(video)
         return video
             

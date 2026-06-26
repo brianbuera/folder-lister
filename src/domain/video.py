@@ -6,6 +6,7 @@ from datetime import datetime
 
 @dataclass
 class Video:
+    id : int | None 
     nombre: str
     hora_fecha: datetime
     ruta: Path
@@ -27,9 +28,10 @@ class Video:
             f"\n==================================================\n"
             f"🎬 VIDEO\n"
             f"==================================================\n"
+            f" ➤ id:              {str(self.id)}\n"
             f"📁 Nombre:          {self.nombre}\n"
             f"🕒 Fecha y Hora:    {self.hora_fecha_str}\n"
-            f"📂 Ruta:   {self.ruta_inicial}\n"
+            f"📂 Ruta:            {self.ruta}\n"
             f"==================================================\n"
         )
 

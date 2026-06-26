@@ -130,4 +130,4 @@ class ConfigManager:
 # INSTANCIA GLOBAL
 # =========================================================
 
-config = ConfigManager()
+#config = ConfigManager()

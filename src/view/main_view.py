@@ -14,23 +14,22 @@ Todo el QSS se carga desde el paquete `styles/`.
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QTableWidget, QTableWidgetItem, QPushButton,
-    QHeaderView, QFrame, QSlider, QSizePolicy, QScrollArea,
-    QGridLayout, QComboBox, QAbstractItemView, QButtonGroup,
+    QLabel,QPushButton,
+    QFrame, QButtonGroup,
     QFileDialog, QMessageBox, QStackedWidget
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QPalette, QFont, QAction
+from PySide6.QtGui import QAction
 
-from ..styles import Theme, load_qss
+from ..styles.loader import load_qss
+from ..styles.theme import Theme
 from .widgets import (
-    NavButton, ActionButton,
-    PaginationButton, ArrowButton,
-    PlayerControlBtn, SectionLabel, ThumbnailWidget, ReproductorWidget
+    NavButton
 )
+from .pages.videos_page import VideosPage
 
 
-class FolderListerView(QMainWindow):
+class MainView(QMainWindow):
     """
     Ventana principal de la aplicación CCTV Folder Lister.
 
@@ -51,14 +50,12 @@ class FolderListerView(QMainWindow):
 
     # ── Señales ─────────────────────────────────────────────────────────
     sig_importar_videos      = Signal(str)
-    sig_eliminar_video      = Signal(int)
-    sig_ordenar_por_hora = Signal()
-    sig_ver_video        = Signal(int)
-    sig_guardar          = Signal()
     sig_pagina           = Signal(int)
     sig_nav_videos       = Signal()
     sig_nav_diapositivas = Signal()
-   
+
+
+
 
     def __init__(self):
         super().__init__()
@@ -66,6 +63,7 @@ class FolderListerView(QMainWindow):
         self.setMinimumSize(1200, 820)
         self.resize(1340, 860)
         self.setStyleSheet(load_qss("global"))
+        self.page_videos = VideosPage()
         self._build_ui()
 
 
@@ -86,7 +84,7 @@ class FolderListerView(QMainWindow):
         root.addWidget(self._make_hsep())
         self.stack = QStackedWidget()
 
-        self.page_videos = self._build_videos_page()
+        
         self.page_diapositivas = self._build_diapositivas_page()
 
         self.stack.addWidget(self.page_videos)
@@ -179,18 +177,6 @@ class FolderListerView(QMainWindow):
         return bar
 
 
-    # ════════════════ PAGINA VIDEOS (Columna izq +  Columna der) ═════════════════════════════════
-    def _build_videos_page(self) -> QWidget:
-        page = QWidget()
-
-        h = QHBoxLayout(page)
-        h.setContentsMargins(16, 16, 16, 16)
-        h.setSpacing(16)
-
-        h.addWidget(self._build_left_column(), stretch=5)
-        h.addWidget(self._build_right_column(), stretch=4)
-
-        return page
 
     # ════════════════ PAGINA DIAPOSITIVAS (En desarrollo) ═════════════════════════════════
     def _build_diapositivas_page(self) -> QWidget:
@@ -206,170 +192,7 @@ class FolderListerView(QMainWindow):
 
         return page
 
-    # ════════════════ COLUMNA IZQUIERDA ═════════════════════════════════
-
-    def _build_left_column(self) -> QWidget:
-        col = QWidget()
-        col.setProperty("panel", "true")
-        col.setStyleSheet(load_qss("panels"))
-
-        layout = QVBoxLayout(col)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        layout.addWidget(self._build_table_header())
-        self.table = self._build_table()
-        layout.addWidget(self.table, stretch=1)
-        layout.addWidget(self._build_bottom_bar())
-
-        return col
-
-    def _build_table_header(self) -> QWidget:
-        header = QWidget()
-        header.setFixedHeight(44)
-        header.setProperty("panel_header", "true")
-        header.setStyleSheet(load_qss("panels"))
-
-        h = QHBoxLayout(header)
-        h.setContentsMargins(16, 0, 16, 0)
-
-        dot = QLabel("●")
-        dot.setObjectName("status_dot")
-        dot.setStyleSheet(load_qss("panels"))
-
-        title = QLabel("FOLDER LISTER")
-        title.setObjectName("lbl_title")
-        title.setStyleSheet(load_qss("panels"))
-
-        h.addWidget(dot)
-        h.addSpacing(6)
-        h.addWidget(title)
-        h.addStretch()
-        return header
-
-
-    def _build_table(self) -> QTableWidget:
-        table = QTableWidget()
-        table.setColumnCount(5)
-        table.setHorizontalHeaderLabels(["N°", "CÁMARA", "HORA", "FECHA", "ACCIÓN"])
-
-        hh = table.horizontalHeader()
-        hh.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-
-        hh.sectionClicked.connect(self._on_header_clicked)
-
-        table.setColumnWidth(0, 48)
-        table.setColumnWidth(2, 90)
-        table.setColumnWidth(3, 110)
-        table.setColumnWidth(4, 110)
-
-        table.verticalHeader().setVisible(False)
-        table.setShowGrid(False)
-        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        table.setRowCount(0)
-
-        return table
-    
-
-    def _build_bottom_bar(self) -> QWidget:
-        bar = QWidget()
-        bar.setFixedHeight(60)
-        bar.setProperty("bottom_bar", "true")
-        bar.setStyleSheet(load_qss("panels"))
-
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(16, 0, 16, 0)
-        layout.setSpacing(6)
-
-        self.btn_prev = ArrowButton("‹")
-        layout.addWidget(self.btn_prev)
-
-        self.page_buttons: list[PaginationButton] = []
-        self._page_group = QButtonGroup(self)
-        self._page_group.setExclusive(True)
-
-        for p in range(1, 6):
-            pb = PaginationButton(str(p), active=(p == 1))
-            self._page_group.addButton(pb)
-            self.page_buttons.append(pb)
-            pb.clicked.connect(lambda _, pg=p: self.sig_pagina.emit(pg))
-            layout.addWidget(pb)
-
-        self.btn_next = ArrowButton("›")
-        layout.addWidget(self.btn_next)
-        layout.addStretch()
-
-        self.btn_guardar = QPushButton("  Guardar carpeta CCTV")
-        self.btn_guardar.setObjectName("btn_guardar")
-        self.btn_guardar.setFixedHeight(38)
-        self.btn_guardar.setStyleSheet(load_qss("player"))
-        self.btn_guardar.clicked.connect(self.sig_guardar.emit)
-        layout.addWidget(self.btn_guardar)
-
-        return bar
-
-    # ════════════════ COLUMNA DERECHA ═══════════════════════════════════
-
-    def _build_right_column(self) -> QWidget:
-        col = QWidget()
-        col.setStyleSheet("background: transparent;")
-        layout = QVBoxLayout(col)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
-        self.reproductor = ReproductorWidget()
-        layout.addWidget(self.reproductor,   stretch=3)
-        layout.addWidget(self._build_captures_panel(), stretch=2)
-        return col
-
-
-
-    # ── Capturas ────────────────────────────────────────────────────────
-    def _build_captures_panel(self) -> QWidget:
-        panel = QWidget()
-        panel.setProperty("panel", "true")
-        panel.setStyleSheet(load_qss("panels"))
-
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(10)
-
-        hdr = QHBoxLayout()
-        hdr.addWidget(SectionLabel("📷", "CAPTURAS DEL VIDEO"))
-        hdr.addStretch()
-        layout.addLayout(hdr)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("background: transparent;")
-
-        container = QWidget()
-        container.setStyleSheet("background: transparent;")
-        grid = QGridLayout(container)
-        grid.setContentsMargins(0, 0, 0, 0)
-        grid.setSpacing(8)
-
-        timestamps = [
-            "08:15:32", "08:15:40", "08:15:48", "08:16:02", "08:16:15",
-            "08:16:28", "08:16:40", "08:16:55", "08:17:05", "08:17:20",
-        ]
-        self.thumbnails: list[ThumbnailWidget] = []
-        for idx, ts in enumerate(timestamps):
-            thumb = ThumbnailWidget(ts, active=(idx == 0))
-            self.thumbnails.append(thumb)
-            grid.addWidget(thumb, idx // 5, idx % 5)
-
-        scroll.setWidget(container)
-        layout.addWidget(scroll)
-        return panel
+ 
     
     # ════════════════════════════════════════════════════════════════════
     #  Cambiar de pagina
@@ -381,94 +204,14 @@ class FolderListerView(QMainWindow):
 
     def show_diapositivas_page(self):
         self.stack.setCurrentWidget(self.page_diapositivas)
-    # ════════════════════════════════════════════════════════════════════
-    #  Funciones tabla
-    # ════════════════════════════════════════════════════════════════════
-
-    # ── Reproducir fila ────────────────────────────────────────────────────────
-    def _on_ver_video(self, row: int):
-        self.table.selectRow(row)
-        self.sig_ver_video.emit(row)
-
-    # ── Eliminar fila ────────────────────────────────────────────────────────
-    def _on_delete_video(self, row: int):
-        self.table.selectRow(row)
-        self.sig_eliminar_video.emit(row)
-
-    # ── Ordenar tabla por hora y fecha ────────────────────────────────────────────────────────
-    def _on_header_clicked(self, column: int):
-        if column == 2:  # Columna HORA
-            self.sig_ordenar_por_hora.emit()
 
 
-    # ── Actualizar tabla ────────────────────────────────────────────────────────
-    def update_table_data(self, cameras: list[dict]):
-        if self.table.rowCount():
-            self.table.setRowCount(0)
-        """
-        Recarga la tabla con datos del Modelo.
 
-        Args:
-            cameras: lista de dicts con claves:
-                    num (int), nombre (str), hora (str), fecha (str)
-        """
-        self.table.setRowCount(len(cameras))
-
-        for i, cam in enumerate(cameras):
-            self.table.setRowHeight(i, 40)
-
-            n = QTableWidgetItem(str(i + 1))
-            n.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            n.setForeground(QColor(Theme.TEXT_SECOND))
-            self.table.setItem(i, 0, n)
-
-            nombre = QTableWidgetItem(cam.get("nombre", ""))
-            self.table.setItem(i, 1, nombre)
-
-            h = QTableWidgetItem(cam.get("hora", ""))
-            h.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            h.setFont(QFont("Consolas", 11))
-            self.table.setItem(i, 2, h)
-
-            f = QTableWidgetItem(cam.get("fecha", ""))
-            f.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.table.setItem(i, 3, f)
-
-            self.table.setCellWidget(
-                i,
-                4,
-                self._create_actions_buttons_cell(i, active=(i == 0))
-            )
-        self.table.selectedItems
-
-
-    #   crear botones play y eliminar
-    def _create_actions_buttons_cell(self, row: int, active: bool = False) -> QWidget:
-        cell = QWidget()
-        cell.setStyleSheet("background: transparent;")
-
-        cell_layout = QHBoxLayout(cell)
-        cell_layout.setContentsMargins(4, 4, 4, 4)
-        cell_layout.setSpacing(4)
-
-        btn_ver = ActionButton("▶")
-        btn_eliminar = ActionButton("🗑")
-
-
-        btn_ver.clicked.connect(lambda _, r=row: self._on_ver_video(r))
-        btn_eliminar.clicked.connect(lambda _, r=row: self._on_delete_video(r))
-
-        cell_layout.addWidget(btn_ver)
-        cell_layout.addWidget(btn_eliminar)
-
-        return cell
-    
 
     def set_active_page(self, page: int):
         """Marca el botón de página correspondiente como activo."""
         for btn in self.page_buttons:
             btn.setChecked(btn.text() == str(page))
-
 
 
     # ── Importar videos ─────────────────────────────────────────────────────────
@@ -499,7 +242,6 @@ class FolderListerView(QMainWindow):
 
 
     # ── Message Box ─────────────────────────────────────────────────────────
-
     def show_info_message(self, title: str, message: str):
         QMessageBox.information(
             self,

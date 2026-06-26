@@ -7,6 +7,6 @@ Exporta:
     FolderListerView — ventana principal de la aplicación
 """
 
-from .main_view import FolderListerView
+from .main_view import MainView
 
-__all__ = ["FolderListerView"]
+__all__ = ["MainView"]

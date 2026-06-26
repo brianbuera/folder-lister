@@ -6,6 +6,7 @@ class VideoRepository:
 
     def __init__(self):
         self._videos: list[Video] = []
+        self._next_id = 1
    
     @property
     def videos(self):
@@ -13,7 +14,10 @@ class VideoRepository:
     
     #Agregar un nuevo video
     def save(self, video):
+        video.id = self._next_id
+        self._next_id += 1
         self._videos.append(video)
+        print(video)
     
     #Encontrar un video por id (indice)
     def find_by_id(self, indice : int) -> Video:

@@ -6,8 +6,8 @@ class PlayerController:
 
     def __init__(self, view, video_service):
         self.view = view
-        self.reproductor = self.view.reproductor
         self.video_service = video_service
+        self.reproductor = self.view.page_videos.reproductor
         self.player = VlcPlayer(self.reproductor.video_area)
         self.current_video = None
         self._connect_signals()
@@ -19,8 +19,7 @@ class PlayerController:
         self.reproductor.sig_seek.connect(self.seek)
         self.reproductor.sig_volume.connect(self.set_volume)
         self.reproductor.sig_speed_change.connect(self.set_speed)
-        self.view.sig_nav_videos.connect(self.view.show_videos_page)
-        self.view.sig_nav_diapositivas.connect(self.view.show_diapositivas_page)
+
 
 
     def load_video(self, row: int):

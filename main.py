@@ -4,10 +4,10 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QColor, QPalette
 
 from src.styles import Theme
-from src.view import FolderListerView
+from src.view import MainView
 from src.service.video_service import VideoService
-from src.controller.folder_lister_controller import FolderListerController
-from src.controller.reproductor_controller import PlayerController
+from src.controller.video_controller import VideoController
+from src.controller.nav_controller import NavController
 
 
 def apply_theme(app: QApplication):
@@ -30,23 +30,19 @@ def apply_theme(app: QApplication):
 
 
 def create_controllers(
-    window: FolderListerView,
+    window: MainView,
     video_service: VideoService
-) -> FolderListerController:
+) -> NavController:
     """Crea y conecta los controladores principales."""
 
-    player_controller = PlayerController(
-        view=window,
-        video_service=video_service
-    )
-
-    main_controller = FolderListerController(
+    video_controller = VideoController(
         video_service=video_service,
-        view=window,
-        player_controller=player_controller
-    )
+        view=window
+        )
 
-    return main_controller
+    nav_controller = NavController(window, video_controller)
+
+    return nav_controller
 
 
 def main():
@@ -54,14 +50,14 @@ def main():
     apply_theme(app)
 
     video_service = VideoService()
-    window = FolderListerView()
+    window = MainView()
 
-    main_controller = create_controllers(
+    nav_controller = create_controllers(
         window=window,
         video_service=video_service
     )
 
-    main_controller.start_app()
+    nav_controller.start_app()
 
     return app.exec()
 
